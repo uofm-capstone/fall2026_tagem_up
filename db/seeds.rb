@@ -58,7 +58,7 @@ User.find_or_create_by(email: "smith.jame@ta.edu") do |user|
   user.temp_password_changed = true
 end
 
-#begin
+
 
 # Students
 emails = [
@@ -98,4 +98,3 @@ guests.each do |guest_data|
     user.role = :guest
   end
 end
-#end
