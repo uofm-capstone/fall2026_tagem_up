@@ -10,7 +10,31 @@
     <div class="text-center semesters-status__content">
       <% if team_exist(@teams) %>
 
-      <%= render "semesters/status_filters", sprint_list: @sprint_list %>
+        <div class="table-responsive mb-4">
+          <table class="table table-bordered align-middle text-center">
+            <thead>
+              <tr>
+                <th>Team</th>
+                <th>Planning</th>
+                <th>Progress / Development</th>
+                <th>Demo Day</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <% @teams.each do |team| %>
+                <tr>
+                  <td class="fw-semibold"><%= team.name %></td>
+                  <td> — </td>
+                  <td> — </td>
+                  <td> — </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+
+        <%= render "semesters/status_filters", sprint_list: @sprint_list %>
       <% if @show_github_inspector %>
         <%= render "semesters/github_data_inspector", teams: @teams, github_inspector: @github_inspector %>
       <% end %>
