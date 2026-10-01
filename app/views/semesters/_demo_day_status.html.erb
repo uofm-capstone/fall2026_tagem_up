@@ -2,8 +2,24 @@
   <div class="card-body">
     <h2 class="text-center">Demo Day</h2>
 
-    <p class="text-center text-muted">
-      Demo Day status for each team will be displayed here.
-    </p>
+    <div class="table-responsive mt-3">
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Team</th>
+            <th>Demo Day Status</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <% teams.each do |team| %>
+            <tr>
+              <td><%= team.name %></td>
+              <td>Not Available</td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
