@@ -22,7 +22,12 @@
         semester: @semester,
         team_sprint_metrics: @team_sprint_metrics,
         status_metrics: @status_metrics %>
+
+      <%= render "semesters/demo_day_status", teams: @teams %>
+      
       <div id="sponsor-modals-container">
+
+
         <%= render "semesters/sponsor_response_modals" %>
       </div>
 
