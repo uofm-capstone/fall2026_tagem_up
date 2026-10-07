@@ -52,8 +52,13 @@
                           } %>
                         </td>
 
-                        <td class="text-muted">
-                          No data available
+                        <td>
+                          <% if team_metric[:ku_band] == "No Data" %>
+                            <span class="text-muted">No data available</span>
+                          <% else %>
+                            <%= team_metric[:ku_score] %>
+                            (<%= team_metric[:ku_band] %>)
+                          <% end %>
                         </td>
                       </tr>
                     </tbody>
@@ -105,7 +110,15 @@
 
                     <tbody>
                       <tr>
-                        <td class="text-muted">No data available</td>
+                        <td>
+                          <% client_score = @sponsor_scores_by_team.dig(team.name, sprint) %>
+
+                          <% if client_score.nil? %>
+                            <span class="text-muted">No data available</span>
+                          <% else %>
+                            <%= client_score %>
+                          <% end %>
+                        </td>
                         <td class="text-muted">No data available</td>
                       </tr>
                     </tbody>
@@ -150,10 +163,38 @@
                           </td>
 
                           <td>
-                            <div class="small text-muted">Last Commit</div>
-                            <span class="github-band">
-                              <%= formatted_last_commit_display(metric) %>
-                            </span>
+                            <% if metric.dig(:github, :data_available) %>
+
+                              <div>
+                                Commits: <%= metric.dig(:cbp, :commit_count).to_i %>
+                              </div>
+
+                              <div>
+                                Lines Changed: <%= metric.dig(:cbp, :lines_changed).to_i %>
+                              </div>
+
+                              <div>
+                                PRs:
+                                <%= metric.dig(:pr, :opened_count).to_i %> opened,
+                                <%= metric.dig(:pr, :merged_count).to_i %> merged
+                              </div>
+
+                              <div>
+                                Reviews: <%= metric.dig(:review, :review_count).to_i %>
+                              </div>
+
+                              <div class="small text-muted">
+                                Last Commit:
+                                <%= formatted_last_commit_display(metric) %>
+                              </div>
+
+                            <% else %>
+
+                              <span class="text-muted">
+                                GitHub data unavailable
+                              </span>
+
+                            <% end %>
                           </td>
                         </tr>
                       <% end %>
@@ -179,7 +220,15 @@
 
                     <tbody>
                       <tr>
-                        <td class="text-muted">No data available</td>
+                        <td>
+                          <% client_score = @sponsor_scores_by_team.dig(team.name, sprint) %>
+
+                          <% if client_score.nil? %>
+                            <span class="text-muted">No data available</span>
+                          <% else %>
+                            <%= client_score %>
+                          <% end %>
+                        </td>
                         <td class="text-muted">No data available</td>
                       </tr>
                     </tbody>
@@ -230,12 +279,39 @@
                           </td>
 
                           <td>
-                            <div class="small text-muted">Last Commit</div>
-                            <span class="github-band">
-                              <%= formatted_last_commit_display(metric) %>
-                            </span>
-                          </td>
+                            <% if metric.dig(:github, :data_available) %>
 
+                              <div>
+                                Commits: <%= metric.dig(:cbp, :commit_count).to_i %>
+                              </div>
+
+                              <div>
+                                Lines Changed: <%= metric.dig(:cbp, :lines_changed).to_i %>
+                              </div>
+
+                              <div>
+                                PRs:
+                                <%= metric.dig(:pr, :opened_count).to_i %> opened,
+                                <%= metric.dig(:pr, :merged_count).to_i %> merged
+                              </div>
+
+                              <div>
+                                Reviews: <%= metric.dig(:review, :review_count).to_i %>
+                              </div>
+
+                              <div class="small text-muted">
+                                Last Commit:
+                                <%= formatted_last_commit_display(metric) %>
+                              </div>
+
+                            <% else %>
+
+                              <span class="text-muted">
+                                GitHub data unavailable
+                              </span>
+
+                            <% end %>
+                          </td>
                           <td class="text-muted">
                             No data available
                           </td>
