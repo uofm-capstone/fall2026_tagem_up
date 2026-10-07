@@ -91,14 +91,6 @@
           group.style.display =
           matchesSprint && matchesStage ? "" : "none";
         });
-
-        const planningLayout = document.querySelector(
-          '[data-stage-layout="planning"]'
-        );
-
-        const legacyLayout = document.querySelector(
-          '[data-stage-layout="legacy"]'
-        );
         
         const cardStages = document.querySelectorAll("[data-card-stage]");
 
@@ -106,14 +98,6 @@
           stage.style.display =
             stage.dataset.cardStage === activeStage ? "" : "none";
         });
-
-        if (planningLayout) {
-          planningLayout.style.display = "";
-        }
-
-        if (legacyLayout) {
-          legacyLayout.style.display = "none";
-        }
         
       }
       // Sprint buttons
