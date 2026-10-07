@@ -12,31 +12,7 @@
     <div class="text-center semesters-status__content">
 
       <% if team_exist(@teams) %>
-
-        <div class="table-responsive mb-4">
-          <table class="table table-bordered align-middle text-center">
-            <thead>
-              <tr>
-                <th>Team</th>
-                <th>Planning</th>
-                <th>Progress / Development</th>
-                <th>Demo Day</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              <% @teams.each do |team| %>
-                <tr>
-                  <td class="fw-semibold"><%= team.name %></td>
-                  <td> — </td>
-                  <td> — </td>
-                  <td> — </td>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
-        </div>
-
+      
         <%= render "semesters/status_filters",
           sprint_list: @sprint_list %>
 
@@ -54,10 +30,11 @@
           team_sprint_metrics: @team_sprint_metrics,
           status_metrics: @status_metrics %>
 
-        <%= render "semesters/demo_day_status",
+              
+        <%#= render "semesters/demo_day_status",
           teams: @teams,
           sprint_list: @sprint_list,
-          team_sprint_metrics: @team_sprint_metrics %>
+          team_sprint_metrics: @team_sprint_metrics #%>
 
         <div id="sponsor-modals-container">
           <%= render "semesters/sponsor_response_modals" %>

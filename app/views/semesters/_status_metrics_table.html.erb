@@ -1,6 +1,16 @@
 <!-- TABLE -->
 <div class="table-responsive team-status-table-wrap">
   <% rubric_items = ["FS&D", "FA", "TE", "TT", "Last Commit", "PP"] %>
+
+  <% rubric_stages = {
+    "FS&D" => "planning",
+    "FA" => "planning",
+    "TE" => "planning",
+    "TT" => "progress demo",
+    "Last Commit" => "progress demo",
+    "PP" => "progress demo"
+  } %>
+  
   <% sponsor_columns = [
     { sprint: "Sprint 2", label: "Sponsor Response - Sprint 2", css: "sprint-2" },
     { sprint: "Sprint 3", label: "Sponsor Response - Sprint 3", css: "sprint-3" },
@@ -33,7 +43,8 @@
             end %>
 
             <th
-              class="sprint-group <%= sprint.parameterize %>"
+              class="sprint-group stage-group <%= sprint.parameterize %>"
+              data-stage="<%= rubric_stages[item] %>"
               data-bs-toggle="tooltip"
               data-bs-html="true"
               data-bs-placement="top"
@@ -77,7 +88,9 @@
             <% sprint_list.each do |sprint| %>
               <% rubric_items.each do |item| %>
                 <% metric = student_metric_by_sprint[sprint] || {} %>
-                <td class="text-center sprint-group <%= sprint.parameterize %>">
+                <td
+                  class="text-center sprint-group stage-group <%= sprint.parameterize %>"
+                  data-stage="<%= rubric_stages[item] %>">
                   <% case item %>
                     <% when "FS&D" %>
                       <% fsd = metric[:fsd] || {} %>
@@ -147,7 +160,9 @@
           <% sprint_list.each do |sprint| %>
             <% rubric_items.each do |item| %>
               <% team_metric = team_sprint_metrics.dig(team.id, sprint) || {} %>
-              <td class="text-center sprint-group <%= sprint.parameterize %>">
+              <td
+                class="text-center sprint-group stage-group <%= sprint.parameterize %>"
+                data-stage="<%= rubric_stages[item] %>">
                 <% case item %>
                   <% when "FS&D" %>
                     <strong><%= "#{team_metric[:backlog_cards] || 0}, #{team_metric[:todo_cards] || 0}, #{team_metric[:in_progress_cards] || 0}, #{team_metric[:done_cards] || 0}" %></strong>
