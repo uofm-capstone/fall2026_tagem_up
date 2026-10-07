@@ -27,6 +27,7 @@
                       <tr>
                         <th>Feature Selection &amp; Decomposition</th>
                         <th>Feature Assignments</th>
+                        <th>Kanban Updates</th>
                       </tr>
                     </thead>
 
@@ -49,6 +50,10 @@
                               :assigned_cards
                             ).to_i
                           } %>
+                        </td>
+
+                        <td class="text-muted">
+                          No data available
                         </td>
                       </tr>
                     </tbody>
@@ -89,8 +94,22 @@
 
                 <h6 class="fw-bold mb-2">Team Evaluation</h6>
 
-                <div class="alert alert-light border text-center mb-4">
-                  No team-level metrics currently available.
+                <div class="table-responsive mb-4">
+                  <table class="table table-bordered text-center align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th>Client Communication</th>
+                        <th>Status &amp; Reflection</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      <tr>
+                        <td class="text-muted">No data available</td>
+                        <td class="text-muted">No data available</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
 
                 <h6 class="fw-bold mb-2">Individual Evaluation</h6>
@@ -101,8 +120,8 @@
                       <tr>
                         <th>Member</th>
                         <th>Time Spent</th>
-                        <th>Last Commit</th>
                         <th>Product Progress</th>
+                        <th>Code Contribution &amp; Source Control</th>
                       </tr>
                     </thead>
 
@@ -122,12 +141,6 @@
                           </td>
 
                           <td>
-                            <span class="github-band">
-                              <%= formatted_last_commit_display(metric) %>
-                            </span>
-                          </td>
-
-                          <td>
                             <%= metric.dig(:pp, :completion_pct) || 0 %>%
                             (<%= metric.dig(:pp, :band) || "No Data" %>)
 
@@ -135,9 +148,17 @@
                               <%= done_count %>/<%= total_count %> done
                             </div>
                           </td>
+
+                          <td>
+                            <div class="small text-muted">Last Commit</div>
+                            <span class="github-band">
+                              <%= formatted_last_commit_display(metric) %>
+                            </span>
+                          </td>
                         </tr>
                       <% end %>
                     </tbody>
+
                   </table>
                 </div>
 
@@ -147,8 +168,22 @@
 
                 <h6 class="fw-bold mb-2">Team Evaluation</h6>
 
-                <div class="alert alert-light border text-center mb-4">
-                  No team-level metrics currently available.
+                <div class="table-responsive mb-4">
+                  <table class="table table-bordered text-center align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th>Client Communication</th>
+                        <th>Demo</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      <tr>
+                        <td class="text-muted">No data available</td>
+                        <td class="text-muted">No data available</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
 
                 <h6 class="fw-bold mb-2">Individual Evaluation</h6>
@@ -159,8 +194,10 @@
                       <tr>
                         <th>Member</th>
                         <th>Time Spent</th>
-                        <th>Last Commit</th>
                         <th>Product Progress</th>
+                        <th>Product Feedback</th>
+                        <th>Code Contribution &amp; Source Control</th>
+                        <th>Status &amp; Reflection</th>
                       </tr>
                     </thead>
 
@@ -180,18 +217,27 @@
                           </td>
 
                           <td>
-                            <span class="github-band">
-                              <%= formatted_last_commit_display(metric) %>
-                            </span>
-                          </td>
-
-                          <td>
                             <%= metric.dig(:pp, :completion_pct) || 0 %>%
                             (<%= metric.dig(:pp, :band) || "No Data" %>)
 
                             <div class="github-band">
                               <%= done_count %>/<%= total_count %> done
                             </div>
+                          </td>
+
+                          <td class="text-muted">
+                            No data available
+                          </td>
+
+                          <td>
+                            <div class="small text-muted">Last Commit</div>
+                            <span class="github-band">
+                              <%= formatted_last_commit_display(metric) %>
+                            </span>
+                          </td>
+
+                          <td class="text-muted">
+                            No data available
                           </td>
                         </tr>
                       <% end %>
