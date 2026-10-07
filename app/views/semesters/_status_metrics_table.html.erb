@@ -10,7 +10,16 @@
     "Last Commit" => "progress demo",
     "PP" => "progress demo"
   } %>
-  
+
+  <% rubric_levels = {
+    "FS&D" => "team",
+    "FA" => "team",
+    "TE" => "individual",
+    "TT" => "individual",
+    "Last Commit" => "individual",
+    "PP" => "individual"
+  } %>
+
   <% sponsor_columns = [
     { sprint: "Sprint 2", label: "Sponsor Response - Sprint 2", css: "sprint-2" },
     { sprint: "Sprint 3", label: "Sponsor Response - Sprint 3", css: "sprint-3" },
@@ -45,6 +54,7 @@
             <th
               class="sprint-group stage-group <%= sprint.parameterize %>"
               data-stage="<%= rubric_stages[item] %>"
+              data-level="<%= rubric_levels[item] %>"
               data-bs-toggle="tooltip"
               data-bs-html="true"
               data-bs-placement="top"
@@ -90,29 +100,45 @@
                 <% metric = student_metric_by_sprint[sprint] || {} %>
                 <td
                   class="text-center sprint-group stage-group <%= sprint.parameterize %>"
-                  data-stage="<%= rubric_stages[item] %>">
-                  <% case item %>
-                    <% when "FS&D" %>
-                      <% fsd = metric[:fsd] || {} %>
-                      <%= "#{fsd[:backlog] || 0}, #{fsd[:todo] || 0}, #{fsd[:in_progress] || 0}, #{fsd[:done] || 0}" %>
-                    <% when "FA" %>
-                      <%= metric.dig(:fa, :assigned_cards) || 0 %>
-                    <% when "TE" %>
-                      <%= metric.dig(:te, :estimated_hours) || 0 %>
-                    <% when "TT" %>
-                      <%= metric.dig(:ts, :time_spent_hours) || 0 %>
-                    <% when "Last Commit" %>
-                      <span class="github-band"><%= formatted_last_commit_display(metric) %></span>
-                    <% when "PP" %>
-                      <% done_count = metric.dig(:fsd, :done).to_i %>
-                      <% total_count = metric.dig(:fa, :assigned_cards).to_i %>
-                      <%= (metric.dig(:pp, :completion_pct) || 0) %>% (<%= metric.dig(:pp, :band) || "No Data" %>)
-                      <div class="github-band"><%= done_count %>/<%= total_count %> done</div>
+                  data-stage="<%= rubric_stages[item] %>"
+                  data-level="<%= rubric_levels[item] %>">
 
-                    <% else %>
-                      <span>-</span>
+                  <% if rubric_levels[item] == "team" %>
+
+                    <span class="text-muted">—</span>
+
+                  <% else %>
+
+                    <% case item %>
+                      <% when "TE" %>
+                        <%= metric.dig(:te, :estimated_hours) || 0 %>
+
+                      <% when "TT" %>
+                        <%= metric.dig(:ts, :time_spent_hours) || 0 %>
+
+                      <% when "Last Commit" %>
+                        <span class="github-band">
+                          <%= formatted_last_commit_display(metric) %>
+                        </span>
+
+                      <% when "PP" %>
+                        <% done_count = metric.dig(:fsd, :done).to_i %>
+                        <% total_count = metric.dig(:fa, :assigned_cards).to_i %>
+
+                        <%= metric.dig(:pp, :completion_pct) || 0 %>%
+                        (<%= metric.dig(:pp, :band) || "No Data" %>)
+
+                        <div class="github-band">
+                          <%= done_count %>/<%= total_count %> done
+                        </div>
+
+                      <% else %>
+                        <span>-</span>
+                    <% end %>
+
                   <% end %>
                 </td>
+                
               <% end %>
             <% end %>
 
@@ -155,30 +181,36 @@
           data-team-id="<%= team.id %>"
           data-at-risk="<%= team_summary[:any_at_risk] %>"
           data-missing-done="<%= team_summary[:any_missing_sprint_done] %>">
-          <td class="sticky-col-2"><strong>Total</strong></td>
+          <td class="sticky-col-2"><strong>Team Evaluation</strong></td>
 
           <% sprint_list.each do |sprint| %>
             <% rubric_items.each do |item| %>
               <% team_metric = team_sprint_metrics.dig(team.id, sprint) || {} %>
               <td
                 class="text-center sprint-group stage-group <%= sprint.parameterize %>"
-                data-stage="<%= rubric_stages[item] %>">
-                <% case item %>
-                  <% when "FS&D" %>
-                    <strong><%= "#{team_metric[:backlog_cards] || 0}, #{team_metric[:todo_cards] || 0}, #{team_metric[:in_progress_cards] || 0}, #{team_metric[:done_cards] || 0}" %></strong>
-                  <% when "FA" %>
-                    <strong><%= team.students.sum { |s| status_metrics.dig(team.id, s.id, sprint, :fa, :assigned_cards).to_i } %></strong>
-                  <% when "TE" %>
-                    <strong><%= team_metric[:estimated_hours] || 0 %></strong>
-                  <% when "TT" %>
-                    <strong><%= team_metric[:time_spent_hours] || 0 %></strong>
-                  <% when "Last Commit" %>
-                    <strong class="github-band"><%= team_last_commit_summary(team: team, sprint: sprint, status_metrics: status_metrics) %></strong>
-                  <% when "PP" %>
-                    <strong><%= team_metric[:pp_completion_pct] || 0 %>% (<%= team_metric[:pp_band] || "No Data" %>)</strong>
-                    <div class="github-band"><%= team_metric[:done_cards].to_i %>/<%= team_metric[:total_cards].to_i %> done</div>
-                  <% else %>
-                    <span>-</span>
+                data-stage="<%= rubric_stages[item] %>"
+                data-level="<%= rubric_levels[item] %>">
+                <% if rubric_levels[item] == "individual" %>
+
+                  <span class="text-muted">—</span>
+
+                <% else %>
+
+                  <% case item %>
+                    <% when "FS&D" %>
+                      <strong>
+                        <%= "#{team_metric[:backlog_cards] || 0}, #{team_metric[:todo_cards] || 0}, #{team_metric[:in_progress_cards] || 0}, #{team_metric[:done_cards] || 0}" %>
+                      </strong>
+
+                    <% when "FA" %>
+                      <strong>
+                        <%= team.students.sum { |s| status_metrics.dig(team.id, s.id, sprint, :fa, :assigned_cards).to_i } %>
+                      </strong>
+
+                    <% else %>
+                      <span>-</span>
+                  <% end %>
+
                 <% end %>
               </td>
             <% end %>
