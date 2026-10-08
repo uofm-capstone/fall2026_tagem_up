@@ -20,8 +20,9 @@ test:
 production:
   adapter: postgresql
   encoding: unicode
-  pool: 5
-  username: rails_user
-  password: <%= ENV['DB_PASSWORD'] %>
-  database: tag_app_production
-  host: /cloudsql/capstone-tool-assisted-grading:us-central1:tag-app-db
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS", 5) %>
+  username: <%= ENV["DB_USER"] %>
+  password: <%= ENV["DB_PASS"] %>
+  database: <%= ENV["DB_NAME"] %>
+  host: <%= ENV["DB_HOST"] || "barnacle-postgres-1" %>
+  port: <%= ENV["DB_PORT"] || 5432 %>

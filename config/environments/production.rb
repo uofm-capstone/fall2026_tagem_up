@@ -19,12 +19,10 @@ Rails.application.configure do
   config.eager_load = true
 
   # Full error reports are disabled and caching is turned on.
-  # config.consider_all_requests_local       = false
+  # config.consider_all_requests_local = false
   config.action_controller.perform_caching = true
 
-
   config.secret_key_base = ENV["SECRET_KEY_BASE"]
-
 
   # Ensures that a master key has been made available in either ENV["RAILS_MASTER_KEY"]
   # or in config/master.key. This key is used to decrypt credentials (and other encrypted files).
@@ -58,6 +56,9 @@ Rails.application.configure do
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
   # config.force_ssl = true
 
+  # Barnacle runs the application behind an HTTPS reverse proxy.
+  config.assume_ssl = ENV["ASSUME_SSL"] == "true"
+
   # Include generic and useful information about system operation, but avoid logging too much
   # information to avoid inadvertent exposure of personally identifiable information (PII).
   config.log_level = :info
@@ -83,17 +84,16 @@ Rails.application.configure do
   end
 
   # Use a real queuing backend for Active Job (and separate queues per environment).
-  # config.active_job.queue_adapter     = :resque
+  # config.active_job.queue_adapter = :resque
   # config.active_job.queue_name_prefix = "tag_production"
 
   config.action_mailer.perform_caching = false
 
   # Ignore bad email addresses and do not raise email delivery errors.
-  # Set this to true and configure the email server for immediate delivery to raise delivery errors.
+  # Set this to true and configure the email server for immediate delivery to raise errors.
   # config.action_mailer.raise_delivery_errors = false
 
-  # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
-  # the I18n.default_locale when a translation cannot be found).
+  # Enable locale fallbacks for I18n.
   config.i18n.fallbacks = true
 
   # Don't log any deprecations.
@@ -107,28 +107,30 @@ Rails.application.configure do
   # config.logger = ActiveSupport::TaggedLogging.new(Syslog::Logger.new "app-name")
 
   if ENV["RAILS_LOG_TO_STDOUT"].present?
-    logger           = ActiveSupport::Logger.new(STDOUT)
+    logger = ActiveSupport::Logger.new(STDOUT)
     logger.formatter = config.log_formatter
-    config.logger    = ActiveSupport::TaggedLogging.new(logger)
+    config.logger = ActiveSupport::TaggedLogging.new(logger)
   end
 
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
 
   config.action_mailer.raise_delivery_errors = true
-  config.action_mailer.perform_deliveries    = true
-  config.action_mailer.delivery_method       = :smtp
-  config.action_mailer.default_url_options   = {
-    host:     "tag-app-service-1081269285897.us-central1.run.app",
+  config.action_mailer.perform_deliveries = true
+  config.action_mailer.delivery_method = :smtp
+
+  config.action_mailer.default_url_options = {
+    host: "tag-app-service-1081269285897.us-central1.run.app",
     protocol: "https"
   }
+
   config.action_mailer.smtp_settings = {
-    address:              "smtp.sendgrid.net",
-    port:                 587,
-    domain:               "tag-app-service-1081269285897.us-central1.run.app",
-    user_name:            "apikey",
-    password:             ENV["SENDGRID_API_KEY"],
-    authentication:       :plain,
+    address: "smtp.sendgrid.net",
+    port: 587,
+    domain: "tag-app-service-1081269285897.us-central1.run.app",
+    user_name: "apikey",
+    password: ENV["SENDGRID_API_KEY"],
+    authentication: :plain,
     enable_starttls_auto: true
   }
 end
