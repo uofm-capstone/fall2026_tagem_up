@@ -922,7 +922,7 @@ end
   end
 
   def safe_github_sprint_metrics(team_service:, repo:, sprint:, students:, team:, cache_version: nil, force_refresh: false)
-    Timeout.timeout(4) do
+    Timeout.timeout(30) do
       build_github_sprint_metrics(
         team_service: team_service,
         repo: repo,
