@@ -351,6 +351,44 @@ end
     render :show
   end
 
+  def student_status
+    @semester = Semester.find_by(id: params[:id])
+    return redirect_to(semesters_path) unless @semester
+
+    @student = current_user.student
+
+    unless current_user.student? && @student.present?
+      return redirect_to(root_path, alert: "Student account not found.")
+    end
+
+    @teams = @student.teams.where(semester_id: @semester.id).includes(:students)
+
+    unless @teams.exists?
+      return render :student_status
+    end
+
+    @force_github_refresh = false
+    @show_github_inspector = false
+
+    @sprints = @semester.sprints.order(:start_date)
+    build_status_payload!
+
+    # Keep only the logged-in student's team(s).
+    @teams = @teams.to_a
+    team_ids = @teams.map(&:id)
+
+    @team_sprint_metrics.select! { |team_id, _| team_ids.include?(team_id) }
+    @status_metrics.select! { |team_id, _| team_ids.include?(team_id) }
+    @team_overview_by_id.select! { |team_id, _| team_ids.include?(team_id) }
+
+    # Keep only this student's individual metrics within those teams.
+    @status_metrics.each do |team_id, student_metrics|
+      @status_metrics[team_id] = student_metrics.slice(@student.id)
+    end
+
+    render :student_status
+  end
+
   # Returns heavy status content after shell has rendered.
   def status_content
     @semester = Semester.find_by(id: params[:id])

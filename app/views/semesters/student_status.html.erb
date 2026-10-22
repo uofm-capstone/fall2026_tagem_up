@@ -1,1 +1,50 @@
-def student_status
+<%= render "shared/page_header",
+  title: "My Status",
+  subtitle: "View your team's progress and your individual sprint progress." %>
+
+<% if @teams.blank? %>
+  <div class="alert alert-info">
+    You are not assigned to a team in this semester yet.
+  </div>
+<% else %>
+  <% @teams.each do |team| %>
+    <section class="ui-card mb-4">
+      <div class="ui-card__body">
+        <h2><%= team.name %></h2>
+
+        <h3 class="mt-3">Team Progress</h3>
+
+        <% team_metrics = @team_sprint_metrics[team.id] || {} %>
+
+        <% if team_metrics.present? %>
+          <% team_metrics.each do |sprint_name, metrics| %>
+            <div class="mb-3">
+              <h4><%= sprint_name %></h4>
+              <p>
+                Completed cards:
+                <%= metrics[:completed_cards] || metrics[:done_cards] || "Not available" %>
+              </p>
+            </div>
+          <% end %>
+        <% else %>
+          <p>Team progress metrics are not available yet.</p>
+        <% end %>
+
+        <h3 class="mt-3">My Individual Progress</h3>
+
+        <% student_metrics = @status_metrics.dig(team.id, @student.id) || {} %>
+
+        <% if student_metrics.present? %>
+          <% student_metrics.each do |sprint_name, metrics| %>
+            <div class="mb-3">
+              <h4><%= sprint_name %></h4>
+              <p>Assigned cards: <%= metrics[:assigned_card_count] || "See sprint metrics" %></p>
+            </div>
+          <% end %>
+        <% else %>
+          <p>Your individual progress metrics are not available yet.</p>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+<% end %>

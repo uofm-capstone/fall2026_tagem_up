@@ -18,6 +18,7 @@ Rails.application.routes.draw do
   get 'semesters/:id', to: 'semesters#show', as: 'semester'
   get 'semesters/:id/status', to: 'semesters#status', as:'semester_status'
   get 'semesters/:id/status_content', to: 'semesters#status_content', as: 'semester_status_content'
+  get 'semesters/:id/student_status', to: 'semesters#student_status', as: 'semester_student_status'
   get 'semesters/:id/sponsor_responses', to: 'semesters#sponsor_responses', as: 'semester_sponsor_responses'
   post 'semesters/:id/upload_sponsor_csv', to: 'semesters#upload_sponsor_csv', as: 'upload_sponsor_csv_semester'
   get 'semesters/:id/sponsor_response_details', to: 'semesters#sponsor_response_details', as: 'semester_sponsor_response_details'
