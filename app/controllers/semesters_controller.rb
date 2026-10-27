@@ -921,6 +921,8 @@ end
     GithubService::BoardHealth.new([], [], false, [])
   end
 
+  # Allow additional time for GitHub API requests to retrieve sprint metrics.
+  # The previous 4-second limit caused premature timeouts and incomplete results on the Team Status Page
   def safe_github_sprint_metrics(team_service:, repo:, sprint:, students:, team:, cache_version: nil, force_refresh: false)
     Timeout.timeout(30) do
       build_github_sprint_metrics(
@@ -1547,6 +1549,9 @@ end
     (numerator.to_f / denominator.to_f) * 100.0
   end
 
+  # Recognizes completed tasks assigned to a specific sprint.
+  # Supports GitHub Project status names such as "Done Archive (Sprint 2)"
+  # so archived tasks are included in sprint progress calculations.
   def done_in_sprint_status?(status, sprint_name)
     return false if status.blank? || sprint_name.blank?
 
@@ -1554,13 +1559,22 @@ end
     return false if sprint_number.blank?
 
     normalized = status.to_s.strip.downcase
-    normalized.match?(/\Adone in sprint\s*#{Regexp.escape(sprint_number)}\z/)
+
+    normalized.match?(
+      /\A(?:done in sprint\s*#{Regexp.escape(sprint_number)}|done archive\s*\(sprint\s*#{Regexp.escape(sprint_number)}\))\z/
+    )
   end
 
+  # Identify completed tasks across all sprints, including tasks
+  # moved into sprint-specific archive columns on the GitHub board.
   def done_in_any_sprint_status?(status)
     return false if status.blank?
 
-    status.to_s.strip.downcase.match?(/\Adone in sprint\s*\d+\z/)
+    normalized = status.to_s.strip.downcase
+
+    normalized.match?(
+      /\A(?:done in sprint\s*\d+|done archive\s*\(sprint\s*\d+\))\z/
+    )
   end
 
   def sprint_in_progress?(sprint)
@@ -1606,6 +1620,9 @@ end
     )
   end
 
+  # Retrieve actual hours worked from a GitHub Project task.
+  # Include "Completed Time" to support the custom field used
+  # by the current team's project board.
   def spent_value(card)
     numeric_field(
       card,
@@ -1614,7 +1631,8 @@ end
       "Hours Spent",
       "Spent",
       "Actual Time",
-      "Time Logged"
+      "Time Logged",
+      "Completed Time"
     )
   end
 
