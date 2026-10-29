@@ -1736,14 +1736,16 @@ end
     end
   end
 
+  # Identify the currently active sprint using its scheduled dates.
+  # Untagged GitHub Project tasks are associated with the active sprint
+  # rather than a future sprint that has not started.
   def latest_sprint_in_semester?(sprint)
-    return false if sprint.blank? || @sprints.blank?
+    return false if sprint.blank? || sprint.start_date.blank? || sprint.end_date.blank?
 
-    current_number = sprint.name.to_s[/\d+/].to_i
-    sprint_numbers = @sprints.map { |item| item.name.to_s[/\d+/].to_i }.select(&:positive?)
-    return current_number == sprint_numbers.max if current_number.positive? && sprint_numbers.any?
+    today = Time.zone.today
 
-    @sprints.last == sprint
+    sprint.start_date.to_date <= today &&
+      sprint.end_date.to_date >= today
   end
 
   def card_matches_sprint?(card, sprint)
