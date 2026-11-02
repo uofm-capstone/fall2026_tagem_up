@@ -1065,7 +1065,8 @@ end
       (pr_score * GITHUB_SCORE_WEIGHTS[:pr]) +
       (review_score * GITHUB_SCORE_WEIGHTS[:review])
     ).round(1)
-    github_band = if assigned_card_count.zero? && !has_non_kanban_github_data
+    github_band = if !github_student_metrics[:data_available] ||
+                    (assigned_card_count.zero? && !has_non_kanban_github_data)
       "No Data"
     else
       github_band_for(github_score)
@@ -1378,8 +1379,8 @@ end
                        lookup_user_metric(fallback_last_commit_at_by_user, username)
 
       per_student[username] = {
-        data_available: true,
-        missing_data_flags: [],
+        data_available: false,
+        missing_data_flags: Array(missing_data_flags),
         last_commit_at: last_commit_at,
         cbp: { commit_count: 0, lines_added: 0, lines_removed: 0, lines_changed: 0 },
         pr: { opened_count: 0, merged_count: 0, open_count: 0, avg_merge_hours: 0.0 },
@@ -1388,7 +1389,7 @@ end
     end
 
     {
-      data_available: true,
+      data_available: false,
       repo: repo,
       cbp: { total_commits: 0, total_lines_changed: 0, active_contributors: 0 },
       pr: { opened_count: 0, merged_count: 0, open_count: 0, avg_merge_hours: 0.0 },

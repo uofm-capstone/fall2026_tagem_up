@@ -190,9 +190,14 @@
 
                             <% else %>
 
-                              <span class="text-muted">
-                                GitHub data unavailable
-                              </span>
+                              <div class="text-muted">
+                                GitHub contribution metrics unavailable
+                              </div>
+
+                              <div class="small text-muted">
+                                Last Commit:
+                                <%= formatted_last_commit_display(metric) %>
+                              </div>
 
                             <% end %>
                           </td>
@@ -306,9 +311,14 @@
 
                             <% else %>
 
-                              <span class="text-muted">
-                                GitHub data unavailable
-                              </span>
+                              <div class="text-muted">
+                                GitHub contribution metrics unavailable
+                              </div>
+
+                              <div class="small text-muted">
+                                Last Commit:
+                                <%= formatted_last_commit_display(metric) %>
+                              </div>
 
                             <% end %>
                           </td>
