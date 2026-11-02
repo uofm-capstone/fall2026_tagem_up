@@ -107,6 +107,131 @@ Current flags include:
 
 These are surfaced in the UI to distinguish low performance from unavailable data.
 
+## GitHub Authentication Setup
+
+### Token Configuration
+
+The application authenticates GitHub API requests using a personal access token (PAT).
+
+`GithubService.resolve_token` selects the first available credential in the following order:
+
+1. Explicitly supplied `token`
+2. `team.github_token`
+3. `user.github_token`
+4. `ENV["GITHUB_PAT"]`
+
+For environments using a shared GitHub credential, configure `GITHUB_PAT` as an environment variable.
+
+Do not commit actual GitHub tokens to source control or include them in application documentation.
+
+### Repository Access and Permissions
+
+The configured token must have access to the repositories and GitHub resources requested by the application.
+
+The integration retrieves repository commits, pull requests, reviews, and GitHub Projects data.
+
+Required token permissions depend on the repository visibility, token type, and GitHub resources being accessed. The precise minimum permission set has not yet been verified.
+
+### Connection Configuration
+
+The GitHub service supports two optional environment variables:
+
+| Environment Variable | Default | Purpose |
+|---|---|---|
+| `GITHUB_OPEN_TIMEOUT_SECONDS` | 4 | Maximum connection establishment time |
+| `GITHUB_READ_TIMEOUT_SECONDS` | 8 | Maximum API response wait time |
+
+These values are read when the application initializes the service class.
+
+### Authentication Verification
+
+The service initializes an Octokit client when a nonblank token is available.
+
+However, successful client initialization does not guarantee that the token is valid or has sufficient permissions.
+
+Actual GitHub API requests are required to verify authentication and repository access.
+
+## GitHub Integration Troubleshooting
+
+### Missing GitHub Credentials
+
+**Symptoms:** GitHub metrics are unavailable, or the service logs a warning about missing credentials.
+
+**Possible cause:** No GitHub token was supplied through the explicit token parameter, team settings, user settings, or `GITHUB_PAT`.
+
+**Recommended checks:**
+- Confirm that a GitHub token is configured.
+- Verify that the application can access the configured credential.
+- Restart the application if environment variables were recently changed.
+
+### Invalid Credentials or Insufficient Permissions
+
+**Symptoms:** GitHub API requests fail with authentication or authorization errors.
+
+**Possible causes:**
+- The token is invalid, expired, or revoked.
+- The token lacks access to the requested repository or GitHub resource.
+
+**Recommended checks:**
+- Verify that the token is still valid.
+- Confirm that the token has access to the intended repository.
+- Check the application logs for GitHub API errors.
+
+### Unavailable Repositories
+
+**Symptoms:** GitHub requests return `Octokit::NotFound`.
+
+**Possible causes:**
+- The repository owner or name is incorrect.
+- The repository was deleted, renamed, or made inaccessible.
+- The configured token lacks access to a private repository.
+
+**Recommended checks:**
+- Verify the repository owner and name.
+- Confirm that the repository exists and is accessible to the configured GitHub account.
+- Check the token's repository access permissions.
+
+### API Rate Limits and Network Failures
+
+**Symptoms:** GitHub metrics fail to load or display unavailable-data indicators.
+
+**Possible causes:**
+- GitHub API rate limits.
+- Network connectivity problems.
+- Slow API responses or request timeouts.
+
+**Recommended checks:**
+- Review application logs for the underlying API error.
+- Check GitHub API rate-limit status when applicable.
+- Verify network connectivity.
+- Review the configured GitHub connection and read timeouts.
+
+### Missing Student GitHub Usernames
+
+**Symptoms:** A student's GitHub metrics display `"No Data"`.
+
+**Possible cause:** The student has not configured a GitHub username.
+
+**Recommended checks:**
+- Confirm that the student's GitHub username is present.
+- Verify that the username matches the intended GitHub account.
+
+The application uses the `no_github_username` missing-data flag when student GitHub metrics are absent and no username is configured.
+
+### Interpreting Missing-Data Indicators
+
+GitHub metrics should distinguish between successful requests returning zero contributions and requests where data could not be retrieved.
+
+Relevant indicators include:
+
+- `no_github_username`: The student has no configured GitHub username.
+- `github_query_failed`: A GitHub metrics request failed.
+- `github_query_timeout`: A GitHub metrics request exceeded its timeout.
+- `repo_missing`: Repository configuration is missing.
+- `token_unavailable`: GitHub credentials are unavailable.
+
+These indicators help distinguish missing information from actual contribution counts.
+
 ## GitHub Authentication and API Error Handling
 
 ### Authentication
