@@ -525,7 +525,7 @@ class GithubService
     end
   rescue StandardError => e
     @logger.error("PR query failed for #{repo}: #{e.class} - #{e.message}")
-    {}
+    raise
   end
 
   def review_metrics_by_user(repo, start_date, end_date, cache_version: nil, force_refresh: false)
@@ -582,7 +582,7 @@ class GithubService
     end
   rescue StandardError => e
     @logger.error("Review query failed for #{repo}: #{e.class} - #{e.message}")
-    {}
+    raise
   end
 
   def parse_repo_url(repo_url)
@@ -668,8 +668,8 @@ class GithubService
       pulls
     end
   rescue Octokit::NotFound
-    @logger.warn("Repository not found for pull request query: #{repo}")
-    @pull_requests_cache[repo] = []
+      @logger.warn("Repository not found or inaccessible for pull request query: #{repo}")
+      raise
   end
 
   def pull_request_reviews(repo, pull_number)
@@ -696,7 +696,8 @@ class GithubService
       reviews
     end
   rescue Octokit::NotFound
-    @pull_request_reviews_cache[cache_key] = []
+    @logger.warn("Pull request reviews not found or inaccessible for #{repo}##{pull_number}")
+    raise
   end
 
   def within_range?(time, start_time, end_time)
