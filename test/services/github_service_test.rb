@@ -150,6 +150,31 @@ class GithubServiceTest < ActiveSupport::TestCase
     end
 
 
+    test "unavailable GitHub repositories raise a not found error" do
+        service = GithubService.new(token: "test-token")
+
+        start_date = Time.zone.parse("2026-10-01")
+        end_date = Time.zone.parse("2026-10-14")
+
+        client = Object.new
+
+        def client.commits(*)
+            raise Octokit::NotFound
+        end
+
+        service.instance_variable_set(:@client, client)
+
+        assert_raises(Octokit::NotFound) do
+            service.commits_in_range(
+                "example/unavailable-repository",
+                start_date,
+                end_date,
+                force_refresh: true
+            )
+        end
+    end
+
+
     test "commit metrics propagate GitHub API rate limit errors" do
         service = GithubService.new(token: "test-token")
 

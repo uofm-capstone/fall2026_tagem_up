@@ -422,4 +422,38 @@ class SemestersControllerTest < ActiveSupport::TestCase
 
     
     end
+
+
+    test "students without GitHub usernames are marked as unavailable" do
+        student = students(:one)
+        student.github_username = nil
+
+        sprint = Sprint.new(
+            name: "Sprint 3",
+            start_date: Time.zone.parse("2026-10-15"),
+            end_date: Time.zone.parse("2026-11-03")
+        )
+
+        service = Minitest::Mock.new
+        service.expect(:get_card_count_per_column, {}, [[]])
+
+        controller = SemestersController.new
+        controller.instance_variable_set(:@service, service)
+
+        result = controller.send(
+            :build_live_status_metrics,
+            sprint_cards: [],
+            board_health: nil,
+            student: student,
+            sprint: sprint,
+            github_student_metrics: nil,
+            team_github_available: true
+        )
+
+        assert_equal false, result[:github][:data_available]
+        assert_includes result[:github][:missing_data_flags], "no_github_username"
+        assert_equal "No Data", result[:github][:band]
+
+        service.verify
+    end
 end
