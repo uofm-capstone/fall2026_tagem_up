@@ -391,4 +391,35 @@ class SemestersControllerTest < ActiveSupport::TestCase
 
         service.verify
     end
+
+
+    test "github API failures are reported as unavailable data" do
+        sprint = Sprint.new(
+            start_date: Time.zone.parse("2026-10-15"),
+            end_date: Time.zone.parse("2026-11-03")
+        )
+
+        service = Object.new
+
+        def service.available?
+            true
+        end
+
+        def service.commit_metrics_by_user(*args, **kwargs)
+            raise Octokit::TooManyRequests
+        end
+
+        result = SemestersController.new.send(
+            :build_github_sprint_metrics,
+            team_service: service,
+            repo: "example/rate-limit-test",
+            sprint: sprint,
+            students: [students(:one)]
+        )
+
+        assert_equal false, result[:data_available]
+        assert_includes result[:missing_data_flags], "github_query_failed"
+
+    
+    end
 end

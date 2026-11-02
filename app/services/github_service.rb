@@ -383,7 +383,7 @@ class GithubService
     end
   rescue StandardError => e
     @logger.error("Commit aggregate query failed for #{repo}: #{e.class} - #{e.message}")
-    {}
+    raise
   end
 
   def last_commit_at_by_user(repo, start_date, end_date, cache_version: nil, force_refresh: false)
