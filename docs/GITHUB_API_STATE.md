@@ -267,20 +267,47 @@ GitHub API access is managed by `GithubService`, located in `app/services/github
 
 ### API Error Handling
 
-GitHub API requests may fail because of invalid credentials, rate limits, or other service errors.
+### API Error Handling
+
+GitHub API requests may fail because of invalid credentials, insufficient
+permissions, rate limits, unavailable repositories, or network errors.
 
 - `commits_in_range` logs and re-raises `Octokit::Unauthorized` exceptions.
-- `commit_metrics_by_user` logs API failures and propagates exceptions instead of silently returning empty contribution results.
-- `build_github_sprint_metrics` catches propagated exceptions and marks GitHub metrics as unavailable using the `github_query_failed` flag.
-- Successful queries returning no contributions remain valid results with zero commits.
+- `commit_metrics_by_user` propagates API failures instead of silently
+  returning empty contribution results.
+- `pr_metrics_by_user` logs and re-raises API exceptions instead of
+  returning empty pull request metrics.
+- `review_metrics_by_user` logs and re-raises API exceptions instead of
+  returning empty review metrics.
+- `build_github_sprint_metrics` catches propagated exceptions and marks
+  GitHub metrics as unavailable using the `github_query_failed` flag.
+- Successful queries returning no contributions remain valid results
+  containing zero contributions.
+- `pull_requests` and `pull_request_reviews` propagate
+  `Octokit::NotFound` exceptions to prevent inaccessible resources
+  from being interpreted as successful empty results.
 
-This distinction prevents failed commit queries from being incorrectly reported as successful queries with zero contributions.
+If an API request fails during pagination, the service propagates the
+exception rather than returning partially retrieved contribution metrics.
+
+This distinction prevents failed GitHub queries from being incorrectly
+reported as successful queries with zero contributions.
 
 ### Known Limitations
 
-- API failures in other GitHub service methods may be handled differently and require separate verification.
-- GitHub rate-limit errors are propagated by the commit-metrics service, but automatic retry and backoff behavior has not been verified.
-- A successfully initialized Octokit client does not guarantee that its token is valid or has sufficient repository permissions.
+- `pull_requests` and `pull_request_reviews` now propagate
+  `Octokit::NotFound` exceptions instead of returning empty arrays.
+  This prevents inaccessible GitHub resources from being silently
+  interpreted as having zero contributions.
+- A `404 Not Found` response may indicate either a nonexistent
+  resource or insufficient repository permissions. The application
+  currently treats both situations as unavailable GitHub data.
+- GitHub rate-limit errors are propagated, but automatic retry and
+  backoff behavior has not been verified.
+- A successfully initialized Octokit client does not guarantee that
+  its token is valid or has sufficient repository permissions.
+- Pagination and failure handling have been verified using mocked
+  GitHub API responses rather than live integration tests.
 
 ## GitHub Commit Pagination
 
@@ -308,6 +335,42 @@ The test confirms that:
 
 The test uses a mocked GitHub client and does not make external API requests.
 
+## GitHub Pull Request and Review Pagination
+
+Pull requests and pull request reviews are retrieved through
+`GithubService`, using the GitHub REST API.
+
+### Pagination Behavior
+
+Both `pull_requests` and `pull_request_reviews`:
+
+- Request up to 100 results per API page.
+- Begin pagination at page 1.
+- Increment the page number after each nonempty response.
+- Continue requesting pages until GitHub returns an empty response.
+- Combine results from all retrieved pages into a single collection.
+
+Unlike commit pagination, these methods continue until an empty
+page is returned, even when the previous page contains fewer
+than 100 results.
+
+### Regression Testing
+
+Tests in `test/services/github_service_test.rb` verify that:
+
+- Pull requests are retrieved across multiple API pages.
+- Pull request reviews are retrieved across multiple API pages.
+- All 125 simulated results are included in each pagination test.
+- API failures during pagination are propagated rather than
+  silently returning incomplete results.
+- Review metrics propagate GitHub API errors.
+
+Controller tests additionally verify that pull request and review
+API failures produce unavailable GitHub metrics with the
+`github_query_failed` flag.
+
+These tests use mocked GitHub API responses and do not make
+external API requests.
 
 ## GitHub Integration Testing and Verification
 

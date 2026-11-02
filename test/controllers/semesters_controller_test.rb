@@ -422,6 +422,85 @@ class SemestersControllerTest < ActiveSupport::TestCase
     
     end
 
+    test "pull request API failures are reported as unavailable data" do
+        sprint = Sprint.new(
+            start_date: Time.zone.parse("2026-10-15"),
+            end_date: Time.zone.parse("2026-11-03")
+        )
+
+        service = Object.new
+
+        def service.available?
+            true
+        end
+
+        def service.commit_metrics_by_user(*args, **kwargs)
+            {}
+        end
+
+        def service.last_commit_at_by_user(*args, **kwargs)
+            {}
+        end
+
+        def service.pr_metrics_by_user(*args, **kwargs)
+            raise Octokit::TooManyRequests
+        end
+
+        result = SemestersController.new.send(
+            :build_github_sprint_metrics,
+            team_service: service,
+            repo: "example/pr-rate-limit-test",
+            sprint: sprint,
+            students: [students(:one)]
+        )
+
+        assert_equal false, result[:data_available]
+        assert_includes result[:missing_data_flags], "github_query_failed"
+        assert_equal 0, result[:pr][:opened_count]
+    end
+
+    test "review API failures are reported as unavailable data" do
+        sprint = Sprint.new(
+            start_date: Time.zone.parse("2026-10-15"),
+            end_date: Time.zone.parse("2026-11-03")
+        )
+
+        service = Object.new
+
+        def service.available?
+            true
+        end
+
+        def service.commit_metrics_by_user(*args, **kwargs)
+            {}
+        end
+
+        def service.last_commit_at_by_user(*args, **kwargs)
+            {}
+        end
+
+        def service.pr_metrics_by_user(*args, **kwargs)
+            {}
+        end
+
+        def service.review_metrics_by_user(*args, **kwargs)
+            raise Octokit::TooManyRequests
+        end
+
+        result = SemestersController.new.send(
+            :build_github_sprint_metrics,
+            team_service: service,
+            repo: "example/review-rate-limit-test",
+            sprint: sprint,
+            students: [students(:one)]
+        )
+
+        assert_equal false, result[:data_available]
+        assert_includes result[:missing_data_flags], "github_query_failed"
+        assert_equal 0, result[:review][:review_count]
+    end
+
+
     test "invalid GitHub credentials are reported as unavailable data" do
         sprint = Sprint.new(
             start_date: Time.zone.parse("2026-10-15"),
