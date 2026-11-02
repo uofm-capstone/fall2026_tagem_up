@@ -1239,8 +1239,8 @@ end
     return empty_team_github_metrics(missing_data_flags: ["repo_missing"]) if repo.blank?
     return empty_team_github_metrics(repo: repo, missing_data_flags: ["token_unavailable"]) unless team_service.available?
 
-    start_date = sprint.start_date || Date.current.beginning_of_month
-    end_date = sprint.end_date || Date.current.end_of_month
+    start_date = (sprint.start_date || Date.current.beginning_of_month).beginning_of_day
+    end_date = (sprint.end_date || Date.current.end_of_month).end_of_day
     fallback_end_date = end_date.respond_to?(:to_date) ? end_date.to_date : Date.current
     fallback_start_date = fallback_end_date - 180.days
 
@@ -1349,8 +1349,8 @@ end
     return empty_team_github_metrics(missing_data_flags: ["repo_missing"]) if repo.blank?
     return empty_team_github_metrics(repo: repo, missing_data_flags: ["token_unavailable"]) unless team_service.available?
 
-    start_date = sprint.start_date || Date.current.beginning_of_month
-    end_date = sprint.end_date || Date.current.end_of_month
+    start_date = (sprint.start_date || Date.current.beginning_of_month).beginning_of_day
+    end_date = (sprint.end_date || Date.current.end_of_month).end_of_day
     fallback_end_date = end_date.respond_to?(:to_date) ? end_date.to_date : Date.current
     fallback_start_date = fallback_end_date - 180.days
 
