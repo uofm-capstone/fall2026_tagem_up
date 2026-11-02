@@ -126,11 +126,32 @@ Do not commit actual GitHub tokens to source control or include them in applicat
 
 ### Repository Access and Permissions
 
-The configured token must have access to the repositories and GitHub resources requested by the application.
+The configured GitHub personal access token (PAT) must have access
+to the repositories and GitHub Projects requested by the application.
 
-The integration retrieves repository commits, pull requests, reviews, and GitHub Projects data.
+For fine-grained personal access tokens, the recommended permissions are:
 
-Required token permissions depend on the repository visibility, token type, and GitHub resources being accessed. The precise minimum permission set has not yet been verified.
+| Resource | Recommended Permission |
+|---|---|
+| Repository commits | Contents: Read-only |
+| Pull requests | Pull requests: Read-only |
+| Pull request reviews | Pull requests: Read-only |
+| GitHub Projects v2 | Projects: Read-only |
+
+For private repositories, the token must also be granted access to
+the relevant repositories.
+
+GitHub Projects v2 data is retrieved through the GraphQL API.
+
+Classic personal access tokens use different scopes, such as `repo`
+for private repository access and `read:project` for Projects access.
+
+These permissions are recommended starting points. The precise
+minimum permission set has not been independently verified against
+all application API requests.
+
+Use the least privileges necessary and never expose GitHub tokens
+in source code, logs, screenshots, or documentation.
 
 ### Connection Configuration
 
