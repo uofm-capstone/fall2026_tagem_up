@@ -1,13 +1,13 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
-  full_name: MyString
-  email: MyString
-  github_username: MyString
-  team_name: MyString
+  full_name: Student One
+  email: student1@example.com
+  github_username: student_one
+  team_name: Test Team
 
 two:
-  full_name: MyString
-  email: MyString
-  github_username: MyString
-  team_name: MyString
+  full_name: Student Two
+  email: student2@example.com
+  github_username: student_two
+  team_name: Test Team

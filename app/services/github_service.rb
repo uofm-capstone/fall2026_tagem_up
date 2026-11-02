@@ -86,31 +86,44 @@ class GithubService
   end
 
   # Fetch commits in date range
-  def commits_in_range(repo, start_date, stop_date)
+  # Fetch commits in date range, reusing cached results
+  def commits_in_range(repo, start_date, stop_date, force_refresh: false)
     return [] unless @client
 
-    commits = []
-    page = 1
+    start_time = normalize_time(start_date)
+    end_time = normalize_time(stop_date)
 
-    loop do
-      batch = @client.commits(
-        repo,
-        per_page: 100,
-        page: page,
-        since: normalize_time(start_date),
-        until: normalize_time(stop_date)
-      )
+    cache_fetch(
+      "commits_in_range",
+      repo,
+      start_time&.iso8601,
+      end_time&.iso8601,
+      force_refresh: force_refresh,
+      expires_in: 10.minutes
+    ) do
+      commits = []
+      page = 1
 
-      break if batch.empty?
+      loop do
+        batch = @client.commits(
+          repo,
+          per_page: 100,
+          page: page,
+          since: start_time,
+          until: end_time
+        )
 
-      commits.concat(batch)
-      page += 1
+        commits.concat(batch)
+        break if batch.length < 100
+
+        page += 1
+      end
+
+      commits
     end
-
-    commits
   rescue Octokit::Unauthorized
     @logger.error("Unauthorized: cannot fetch commits for #{repo}")
-    []
+    raise
   end
 
   # Filter commits by username
@@ -340,7 +353,7 @@ class GithubService
       force_refresh: force_refresh,
       expires_in: 10.minutes
     ) do
-      commits = commits_in_range(repo, start_time, end_time)
+      commits = commits_in_range(repo, start_time, end_time, force_refresh: force_refresh)
       metrics = Hash.new { |hash, key| hash[key] = { commit_count: 0, lines_added: 0, lines_removed: 0 } }
 
       commits.each do |commit|
@@ -370,7 +383,7 @@ class GithubService
     end
   rescue StandardError => e
     @logger.error("Commit aggregate query failed for #{repo}: #{e.class} - #{e.message}")
-    {}
+    raise
   end
 
   def last_commit_at_by_user(repo, start_date, end_date, cache_version: nil, force_refresh: false)
