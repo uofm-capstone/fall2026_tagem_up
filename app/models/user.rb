@@ -39,8 +39,8 @@ class User < ApplicationRecord
   has_one :student, dependent: :nullify
 
   # Joint table with Team
-  # has_many :user_teams, dependent: :destroy
-  # has_many :teams, through: :user_teams
+  has_many :user_teams, dependent: :destroy
+  has_many :assigned_teams, through: :user_teams, source: :team
 
 
   # For backward compatibility with existing admin boolean

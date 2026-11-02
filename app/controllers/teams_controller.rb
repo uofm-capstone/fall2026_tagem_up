@@ -6,9 +6,13 @@ class TeamsController < ApplicationController
 
   def index
     @students = Student.where(semester_id: session[:last_viewed_semester_id]).order(:full_name)
-    
+
     if current_user.student?
       @teams = current_user.student ? current_user.student.teams : Team.none
+    elsif current_user.ta?
+      @teams = current_user.assigned_teams.where(
+        semester_id: session[:last_viewed_semester_id]
+      )
     else
       @teams = Team.where(semester_id: session[:last_viewed_semester_id])
     end
@@ -78,7 +82,6 @@ class TeamsController < ApplicationController
   end
 
   def destroy
-    @team = Team.find(params[:id])
     @team.destroy
     redirect_to teams_path, notice: 'Team was successfully deleted.'
   end
@@ -111,6 +114,14 @@ class TeamsController < ApplicationController
 
   def set_team
     @team = Team.find(params[:id])
+
+    if current_user.ta? &&
+      !current_user.assigned_teams.exists?(
+        id: @team.id,
+        semester_id: session[:last_viewed_semester_id]
+      )
+      raise CanCan::AccessDenied
+    end
   end
 
   def team_params

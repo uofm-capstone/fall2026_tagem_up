@@ -44,14 +44,14 @@ end
 # Adding more seed data
 
 # Teaching Assistants
-User.find_or_create_by(email: "doe.john@ta.edu") do |user|
+ta1 = User.find_or_create_by(email: "doe.john@ta.edu") do |user|
   user.password = "TApass123!"
   user.role = :ta
   user.is_active = true
   user.temp_password_changed = true
 end
 
-User.find_or_create_by(email: "smith.jame@ta.edu") do |user|
+ta2 = User.find_or_create_by(email: "smith.jame@ta.edu") do |user|
   user.password = "TApass456!"
   user.role = :ta
   user.is_active = true

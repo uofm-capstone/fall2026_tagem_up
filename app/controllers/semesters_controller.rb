@@ -25,8 +25,8 @@ class SemestersController < ApplicationController
 
   before_action :set_semester, only: [:show, :edit, :update, :destroy, :sponsor_responses, :upload_sponsor_csv, :sponsor_response_details]
   before_action :check_ownership, only: [:destroy]
-  before_action :check_admin
-  before_action :check_ta_or_admin, only: [:sponsor_responses, :upload_sponsor_csv, :sponsor_response_details]
+  before_action :check_ta_or_admin, only: [:index, :show, :status,:sponsor_responses, :upload_sponsor_csv, :sponsor_response_details]
+  before_action :check_admin, except: [:index, :show, :status,:sponsor_responses, :upload_sponsor_csv, :sponsor_response_details]
   skip_before_action :check_admin, only: [:sponsor_responses, :upload_sponsor_csv, :sponsor_response_details]
 
   # --------------------------------------------------------
@@ -65,13 +65,28 @@ class SemestersController < ApplicationController
 
   def select
     @semester = Semester.find(params[:id])
+
+    if current_user.ta? &&
+      !current_user.assigned_teams.exists?(semester_id: @semester.id)
+      return redirect_to(semesters_path, alert: "You are not assigned to any teams in this semester.")
+    end
+
     session[:last_viewed_semester_id] = @semester.id
     redirect_to semesters_path, notice: "Semester selected."
   end
 
   # Displays all semesters on the main Semesters page.
   def home
-    @semesters = Semester.order(:year)
+    if current_user.ta?
+      @semesters = Semester.joins(:teams)
+                          .joins(teams: :user_teams)
+                          .where(user_teams: { user_id: current_user.id })
+                          .distinct
+                          .order(:year)
+    else
+      @semesters = Semester.order(:year)
+    end
+
     render :home
   end
 
@@ -88,7 +103,11 @@ class SemestersController < ApplicationController
     session[:last_viewed_semester_id] = @semester.id
 
     # Load all teams and sprint info.
-    @teams = @semester.teams
+    if current_user.ta?
+      @teams = current_user.assigned_teams.where(semester_id: @semester.id)
+    else
+      @teams = @semester.teams
+    end
     @sprint_list = @semester.sprints.pluck(:name)
     @flags = {}
 
@@ -341,6 +360,11 @@ end
   def status
     @semester = Semester.find_by(id: params[:id])
     return redirect_to(semesters_path) unless @semester
+
+    if current_user.ta? &&
+      !current_user.assigned_teams.exists?(semester_id: @semester.id)
+      return redirect_to(semesters_path, alert: "You are not assigned to any teams in this semester.")
+    end
 
     if ActiveModel::Type::Boolean.new.cast(params[:force_refresh])
       session[:status_force_refresh_once] = true

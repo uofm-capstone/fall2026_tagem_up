@@ -56,23 +56,24 @@ class Ability
       if user.ta?
         can :read, User
         can :modify, User
-        # TAs can manage users except admins
         can :update, User do |user_to_update|
           !user_to_update.admin?
         end
 
         can :read, Semester
-        # Team
-        can :read, Team
+
+        # Team access: only teams assigned to this TA
+        can :read, Team, user_teams: { user_id: user.id }
+        can :modify, Team, user_teams: { user_id: user.id }
+
+        # Allow TAs to create teams
         can :create, Team
-        can :modify, Team
-        can :add_member, Team
-        can :remove_member, Team
-        can :manage, UserTeam
+
         # Repository
         can :read, Repository
         can :create, Repository
         can :update, Repository
+
         # Sprint
         can :read, Sprint
         can :create, Sprint
