@@ -210,13 +210,15 @@ The full test suite was executed successfully on November 2, 2026.
 
 | Metric | Result |
 |---|---|
-| Tests executed | 75 |
-| Assertions | 271 |
+| Tests executed | 77 |
+| Assertions | 276 |
 | Failures | 0 |
 | Errors | 0 |
 | Skipped tests | 0 |
 
-All tests passed after implementing the GitHub API error-handling improvements and additional regression tests.
+Additional regression tests verified:
+- Unavailable GitHub repositories raise `Octokit::NotFound`.
+- Students without GitHub usernames receive the `no_github_username` flag and a `"No Data"` performance band.
 
 ### Limitations
 
