@@ -107,12 +107,149 @@ Current flags include:
 
 These are surfaced in the UI to distinguish low performance from unavailable data.
 
+## GitHub Authentication and API Error Handling
+
+### Authentication
+
+GitHub API access is managed by `GithubService`, located in `app/services/github_service.rb`.
+
+- The service resolves a GitHub token during initialization.
+- If no token is available, the GitHub client is not initialized, and `available?` returns `false`.
+- If a token is provided, the service initializes an Octokit client.
+- The service does not perform an immediate authentication request during initialization to avoid unnecessary API calls and increased loading times.
+- The `available?` method confirms that a client exists; it does not verify whether the token is valid.
+
+### API Error Handling
+
+GitHub API requests may fail because of invalid credentials, rate limits, or other service errors.
+
+- `commits_in_range` logs and re-raises `Octokit::Unauthorized` exceptions.
+- `commit_metrics_by_user` logs API failures and propagates exceptions instead of silently returning empty contribution results.
+- `build_github_sprint_metrics` catches propagated exceptions and marks GitHub metrics as unavailable using the `github_query_failed` flag.
+- Successful queries returning no contributions remain valid results with zero commits.
+
+This distinction prevents failed commit queries from being incorrectly reported as successful queries with zero contributions.
+
+### Known Limitations
+
+- API failures in other GitHub service methods may be handled differently and require separate verification.
+- GitHub rate-limit errors are propagated by the commit-metrics service, but automatic retry and backoff behavior has not been verified.
+- A successfully initialized Octokit client does not guarantee that its token is valid or has sufficient repository permissions.
+
+## GitHub Commit Pagination
+
+GitHub commit history is retrieved through `GithubService#commits_in_range`, using the GitHub REST API.
+
+### Pagination Behavior
+
+- The service requests up to 100 commits per API page.
+- Requests begin at page 1.
+- When a page contains exactly 100 commits, the service requests the next page.
+- Pagination stops when a page contains fewer than 100 commits.
+- Results from all retrieved pages are combined into a single commit list.
+- The requested sprint date range is applied to each API request.
+
+### Regression Testing
+
+A regression test in `test/services/github_service_test.rb` verifies pagination using a simulated repository containing 125 commits.
+
+The test confirms that:
+
+- Page 1 returns 100 commits.
+- Page 2 returns 25 commits.
+- All 125 commits are included in the final result.
+- The correct pagination parameters are used for both requests.
+
+The test uses a mocked GitHub client and does not make external API requests.
+
+
+## GitHub Integration Testing and Verification
+
+### Automated Test Coverage
+
+GitHub integration tests are located in:
+
+- `test/services/github_service_test.rb`
+- `test/controllers/semesters_controller_test.rb`
+
+The tests cover the following functionality:
+
+**Authentication and API Error Handling**
+- Missing GitHub tokens and unavailable clients.
+- Unauthorized GitHub API requests.
+- Propagation of GitHub API rate-limit errors.
+- Controller handling of failed API requests.
+- Distinguishing unavailable GitHub data from successful queries returning zero contributions.
+
+**Caching and Data Retrieval**
+- Reusing cached commit lists.
+- Bypassing cached results during forced refreshes.
+- Sharing cached commit lists between contribution metrics and last-commit calculations.
+- Retrieving commits across multiple API pages.
+
+**Sprint Metrics**
+- Correct sprint date boundaries.
+- Separate reporting windows for different sprints.
+- Aggregation of commits, pull requests, and reviews.
+- Preservation of last-commit timestamps during fallback processing.
+
+### Test Execution
+
+Run the complete Rails test suite using:
+
+```bash
+docker compose exec \
+  -e RAILS_ENV=test \
+  -e DATABASE_URL=postgres://postgres:password@db:5432/tag_app_test \
+  web bin/rails test
+```
+
+### Verification Results
+
+The full test suite was executed successfully on November 2, 2026.
+
+| Metric | Result |
+|---|---|
+| Tests executed | 75 |
+| Assertions | 271 |
+| Failures | 0 |
+| Errors | 0 |
+| Skipped tests | 0 |
+
+All tests passed after implementing the GitHub API error-handling improvements and additional regression tests.
+
+### Limitations
+
+The GitHub integration tests use mocked API responses. They verify application behavior without requiring live GitHub requests.
+
+Live API behavior, including actual rate-limit responses, repository permissions, and network failures, may require additional integration testing.
+
+
 ## GitHub Service Caching
 
-- `commit_details` cached for 12 hours.
-- `pull_requests` cached for 10 minutes.
-- `pull_request_reviews` cached for 10 minutes.
+GitHub API responses are cached to reduce redundant requests and improve Team Status Page loading performance.
+
+Current caching behavior:
+
+- `commits_in_range` caches commit lists for 10 minutes, using the repository and normalized date range as cache-key inputs.
+- `commit_metrics_by_user` reuses cached commit lists when calculating commit counts and lines changed.
+- `last_commit_at_by_user` can reuse the same cached commit lists when calculating last-commit timestamps.
+- `commit_details` is cached for 12 hours.
+- `pull_requests` is cached for 10 minutes.
+- `pull_request_reviews` is cached for 10 minutes.
 - `cache_fetch` uses Rails cache when available, otherwise a shared in-memory fallback.
+
+### Forced Refresh Behavior
+
+The `force_refresh` parameter allows the application to bypass cached results when updated GitHub data is requested.
+
+During a forced refresh, commit metrics retrieve a fresh commit list. Subsequent last-commit calculations can reuse that refreshed list, avoiding unnecessary duplicate API requests.
+
+### Performance Verification
+
+After implementing commit-list caching, three consecutive Team Status Page refreshes completed in approximately 7, 7, and 6 seconds.
+
+An earlier initial page load took approximately 60 seconds and required another refresh. Although subsequent refreshes succeeded, initial-load performance may warrant additional investigation.
 
 ## Out of Scope for GitHub-Only Metrics
 
