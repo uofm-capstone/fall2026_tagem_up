@@ -4,22 +4,49 @@ class TeamsController < ApplicationController
 
   load_and_authorize_resource class: Team
 
+  
+  
   def index
-    @students = Student.where(semester_id: session[:last_viewed_semester_id]).order(:full_name)
+    if current_user.ta?
+      # Get the semester associated with the TA's assigned teams.
+      @current_semester = current_user.assigned_teams
+                                      .joins(:semester)
+                                      .first&.semester
 
-    if current_user.student?
-      @teams = current_user.student ? current_user.student.teams : Team.none
-    elsif current_user.ta?
-      @teams = current_user.assigned_teams.where(
-        semester_id: session[:last_viewed_semester_id]
+      if @current_semester
+        session[:last_viewed_semester_id] = @current_semester.id
+      end
+
+      @teams = current_user.assigned_teams
+                          .where(semester_id: @current_semester&.id)
+
+      @students = Student.joins(:teams)
+                        .where(teams: { id: @teams.select(:id) })
+                        .distinct
+                        .order(:full_name)
+
+    elsif current_user.student?
+      @current_semester = Semester.find_by(
+        id: session[:last_viewed_semester_id]
       )
+      @teams = current_user.student ? current_user.student.teams : Team.none
+      @students = Student.none
+
     else
-      @teams = Team.where(semester_id: session[:last_viewed_semester_id])
+      @current_semester = Semester.find_by(
+        id: session[:last_viewed_semester_id]
+      )
+      @teams = Team.where(semester_id: @current_semester&.id)
+      @students = Student.where(
+        semester_id: @current_semester&.id
+      ).order(:full_name)
     end
 
     @team = Team.new
     render :index
   end
+
+
 
   def show
     authorize! :read, @team
@@ -31,19 +58,48 @@ class TeamsController < ApplicationController
     @team = Team.new
   end
 
+  
   def create
     @team = Team.new(team_params)
-    @team.semester = Semester.find(session[:last_viewed_semester_id])
+    @current_semester = Semester.find_by(
+      id: session[:last_viewed_semester_id]
+    )
+
+    unless @current_semester
+      return redirect_to semesters_path, alert: "Please select a semester first."
+    end
+
+    @team.semester = @current_semester
     authorize! :create, @team
 
     if @team.save
-      redirect_to teams_path, notice: 'Team was successfully created.'
+      # Automatically assign a newly created team to its TA.
+      if current_user.ta?
+        current_user.user_teams.create!(team: @team)
+      end
+
+      redirect_to teams_path, notice: "Team was successfully created."
     else
-      @semesters = Semester.all
-      @teams = Team.all 
-      render :index
+      if current_user.ta?
+        @teams = current_user.assigned_teams.where(
+          semester_id: @current_semester.id
+        )
+
+        @students = Student.joins(:teams)
+                          .where(teams: { id: @teams.select(:id) })
+                          .distinct
+                          .order(:full_name)
+      else
+        @teams = Team.where(semester_id: @current_semester.id)
+        @students = Student.where(
+          semester_id: @current_semester.id
+        ).order(:full_name)
+      end
+
+      render :index, status: :unprocessable_entity
     end
   end
+
 
   def import_csv
     semester_id = session[:last_viewed_semester_id]

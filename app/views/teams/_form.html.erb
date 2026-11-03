@@ -1,4 +1,4 @@
-<%= form_with(model: team, current_semester: current_semester, local: true) do |form| %>
+<%= form_with(model: team, local: true) do |form| %>
   <% if team.errors.any? %>
     <div class="alert alert-danger">
       <h4><%= pluralize(team.errors.count, "error") %> prohibited this team from being saved:</h4>
