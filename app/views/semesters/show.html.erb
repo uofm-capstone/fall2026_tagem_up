@@ -26,6 +26,9 @@
                 <%= link_to "Update Cached Status Data",
                   semester_status_path(@semester, force_refresh: 1, debug: params[:debug]),
                   class: "btn btn-sm btn-outline-primary" %>
+                <%= link_to "Manage Sprint Dates",
+                  semester_sprints_path(@semester),
+                  class: "btn btn-sm btn-outline-secondary" %>
                 <% if flash[:notice].to_s.downcase.include?("snapshot") %>
                   <span class="badge text-bg-info align-self-center">Snapshot update requested</span>
                 <% end %>

@@ -56,8 +56,14 @@
                           <% if team_metric[:ku_band] == "No Data" %>
                             <span class="text-muted">No data available</span>
                           <% else %>
-                            <%= team_metric[:ku_score] %>
-                            (<%= team_metric[:ku_band] %>)
+                            <div class="github-score-cell">
+                              <span class="github-score-badge <%= github_score_state_class(team_metric[:ku_score]) %>">
+                                <%= team_metric[:ku_score] %>%
+                              </span>
+                              <span class="github-band">
+                                <%= team_metric[:ku_band] %>
+                              </span>
+                            </div>
                           <% end %>
                         </td>
                       </tr>
@@ -154,16 +160,65 @@
                           </td>
 
                           <td>
-                            <%= metric.dig(:pp, :completion_pct) || 0 %>%
-                            (<%= metric.dig(:pp, :band) || "No Data" %>)
+                            <% pp_score = metric.dig(:pp, :completion_pct) %>
+                            <% pp_band = metric.dig(:pp, :band) || "No Data" %>
 
-                            <div class="github-band">
-                              <%= done_count %>/<%= total_count %> done
-                            </div>
+                            <% if pp_band == "No Data" || pp_score.nil? %>
+                              <span class="text-muted">No data available</span>
+                            <% else %>
+                              <div class="github-score-cell">
+                                <span class="github-score-badge <%= product_progress_state_class(pp_score) %>">
+                                  <%= pp_score %>%
+                                </span>
+
+                                <span class="github-band">
+                                  <%= pp_band %>
+                                </span>
+
+                                <div class="github-band">
+                                  <%= done_count %>/<%= total_count %> done
+                                </div>
+                              </div>
+                            <% end %>
                           </td>
 
                           <td>
                             <% if metric.dig(:github, :data_available) %>
+
+                              <% github_metric = metric[:github] || {} %>
+
+                              <div class="github-score-cell mb-2">
+
+                                <% if github_metric[:band] != "No Data" %>
+                                  <span class="github-score-badge <%= github_score_state_class(github_metric[:score]) %>">
+                                    <%= github_metric[:score] %>%
+                                  </span>
+
+                                  <span class="github-band">
+                                    <%= github_metric[:band] %>
+                                  </span>
+                                <% else %>
+                                  <span class="github-band">No score available</span>
+                                <% end %>
+
+                                <div class="github-score-chips">
+                                  <% [
+                                    ["GH", github_metric[:score]],
+                                    ["CBP", github_metric[:cbp_score]],
+                                    ["PR", github_metric[:pr_score]],
+                                    ["RVW", github_metric[:review_score]]
+                                  ].each do |label, score| %>
+                                    <span
+                                      class="github-chip"
+                                      data-bs-toggle="tooltip"
+                                      data-bs-placement="top"
+                                      title="<%= github_chip_tooltip(label) %>">
+                                      <%= label %> <%= score.nil? ? "N/A" : compact_score(score) %>
+                                    </span>
+                                  <% end %>
+                                </div>
+
+                              </div>
 
                               <div>
                                 Commits: <%= metric.dig(:cbp, :commit_count).to_i %>
@@ -271,12 +326,26 @@
                           </td>
 
                           <td>
-                            <%= metric.dig(:pp, :completion_pct) || 0 %>%
-                            (<%= metric.dig(:pp, :band) || "No Data" %>)
+                            <% pp_score = metric.dig(:pp, :completion_pct) %>
+                            <% pp_band = metric.dig(:pp, :band) || "No Data" %>
 
-                            <div class="github-band">
-                              <%= done_count %>/<%= total_count %> done
-                            </div>
+                            <% if pp_band == "No Data" || pp_score.nil? %>
+                              <span class="text-muted">No data available</span>
+                            <% else %>
+                              <div class="github-score-cell">
+                                <span class="github-score-badge <%= product_progress_state_class(pp_score) %>">
+                                  <%= pp_score %>%
+                                </span>
+
+                                <span class="github-band">
+                                  <%= pp_band %>
+                                </span>
+
+                                <div class="github-band">
+                                  <%= done_count %>/<%= total_count %> done
+                                </div>
+                              </div>
+                            <% end %>
                           </td>
 
                           <td class="text-muted">
@@ -285,6 +354,41 @@
 
                           <td>
                             <% if metric.dig(:github, :data_available) %>
+
+                              <% github_metric = metric[:github] || {} %>
+
+                              <div class="github-score-cell mb-2">
+
+                                <% if github_metric[:band] != "No Data" %>
+                                  <span class="github-score-badge <%= github_score_state_class(github_metric[:score]) %>">
+                                    <%= github_metric[:score] %>%
+                                  </span>
+
+                                  <span class="github-band">
+                                    <%= github_metric[:band] %>
+                                  </span>
+                                <% else %>
+                                  <span class="github-band">No score available</span>
+                                <% end %>
+
+                                <div class="github-score-chips">
+                                  <% [
+                                    ["GH", github_metric[:score]],
+                                    ["CBP", github_metric[:cbp_score]],
+                                    ["PR", github_metric[:pr_score]],
+                                    ["RVW", github_metric[:review_score]]
+                                  ].each do |label, score| %>
+                                    <span
+                                      class="github-chip"
+                                      data-bs-toggle="tooltip"
+                                      data-bs-placement="top"
+                                      title="<%= github_chip_tooltip(label) %>">
+                                      <%= label %> <%= score.nil? ? "N/A" : compact_score(score) %>
+                                    </span>
+                                  <% end %>
+                                </div>
+
+                              </div>
 
                               <div>
                                 Commits: <%= metric.dig(:cbp, :commit_count).to_i %>
