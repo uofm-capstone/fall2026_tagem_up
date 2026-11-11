@@ -12,9 +12,37 @@
           <% team_metric = team_sprint_metrics.dig(team.id, sprint) || {} %>
 
           <div class="card mb-4">
-            <div class="card-header">
+          <div class="card-header d-flex align-items-center justify-content-between gap-2">
+            <div class="d-flex align-items-center gap-2">
               <strong><%= team.name %></strong>
+
+              <% if team_metric[:at_risk] %>
+                <span
+                  class="team-risk-badge"
+                  data-bs-toggle="tooltip"
+                  data-bs-placement="top"
+                  title="<%= Array(team_metric[:at_risk_reasons]).join('; ') %>">
+                  At Risk
+                </span>
+              <% end %>
             </div>
+
+            <div class="d-flex align-items-center gap-2">
+              <span class="small text-muted">Team Progress:</span>
+
+              <% if team_metric[:pp_band] == "No Data" || team_metric[:pp_completion_pct].nil? %>
+                <span class="text-muted small">No data available</span>
+              <% else %>
+                <span class="github-score-badge <%= product_progress_state_class(team_metric[:pp_completion_pct]) %>">
+                  <%= team_metric[:pp_completion_pct] %>%
+                </span>
+
+                <span class="github-band">
+                  <%= team_metric[:pp_band] %>
+                </span>
+              <% end %>
+            </div>
+          </div>
 
             <div class="card-body">
 
@@ -25,9 +53,24 @@
                   <table class="table table-bordered text-center align-middle mb-0">
                     <thead>
                       <tr>
-                        <th>Feature Selection &amp; Decomposition</th>
-                        <th>Feature Assignments</th>
-                        <th>Kanban Updates</th>
+                        <th
+                          data-bs-toggle="tooltip"
+                          data-bs-placement="top"
+                          title="Number of sprint cards grouped by status: Backlog, Todo, In Progress, and Done.">
+                          Feature Selection &amp; Decomposition
+                        </th>
+                        <th
+                          data-bs-toggle="tooltip"
+                          data-bs-placement="top"
+                          title="Total number of sprint cards assigned to team members.">
+                          Feature Assignments
+                        </th>
+                        <th
+                          data-bs-toggle="tooltip"
+                          data-bs-placement="top"
+                          title="Team Kanban quality score based on completed cards with estimates and logged time.">
+                          Kanban Updates
+                        </th>
                       </tr>
                     </thead>
 
@@ -78,7 +121,12 @@
                     <thead>
                       <tr>
                         <th>Member</th>
-                        <th>Time Estimate</th>
+                        <th
+                          data-bs-toggle="tooltip"
+                          data-bs-placement="top"
+                          title="Estimated hours for this student's assigned sprint cards.">
+                          Time Estimate
+                        </th>
                       </tr>
                     </thead>
 
@@ -109,23 +157,56 @@
                   <table class="table table-bordered text-center align-middle mb-0">
                     <thead>
                       <tr>
-                        <th>Client Communication</th>
-                        <th>Status &amp; Reflection</th>
+                        <th data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            title="Team evaluation: Did the team meet with the client or attempt to contact them, document meeting feedback, schedule the next meeting, and update the Kanban backlog based on feedback when needed?">
+                          Client Communication
+                        </th>
+                        <th data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            title="Team evaluation: Did the team communicate its progress, blockers, risks, and support needs to the professor?">
+                          Status &amp; Reflection
+                        </th>
                       </tr>
                     </thead>
 
                     <tbody>
                       <tr>
                         <td>
-                          <% client_score = @sponsor_scores_by_team.dig(team.name, sprint) %>
-
-                          <% if client_score.nil? %>
-                            <span class="text-muted">No data available</span>
+                          <% if team.client_notes_url.present? %>
+                            <%= link_to "Client Notes Available",
+                                team.client_notes_url,
+                                class: "btn btn-outline-secondary btn-sm link-button available",
+                                target: "_blank",
+                                rel: "noopener noreferrer",
+                                data: {
+                                  bs_toggle: "tooltip",
+                                  bs_placement: "top",
+                                  bs_title: "Client meeting notes link is available. Meeting activity and rubric compliance have not been verified."
+                                } %>
                           <% else %>
-                            <%= client_score %>
+                            <span class="btn btn-outline-secondary btn-sm link-button missing"
+                                  data-bs-toggle="tooltip"
+                                  data-bs-placement="top"
+                                  title="No client meeting notes link has been provided.">
+                              Client Notes Missing
+                            </span>
                           <% end %>
                         </td>
-                        <td class="text-muted">No data available</td>
+                        <td>
+                          <div class="d-inline-flex align-items-center gap-2">
+                            <span class="ui-tooltip"
+                                  tabindex="0"
+                                  aria-label="No evaluation data available"
+                                  data-tooltip="No evaluation data available">
+                              <%= image_tag "question-circle-fill.svg",
+                                  class: "team-status-icon",
+                                  alt: "",
+                                  aria: { hidden: true } %>
+                            </span>
+                            <span class="text-muted">No data available</span>
+                          </div>
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -138,9 +219,24 @@
                     <thead>
                       <tr>
                         <th>Member</th>
-                        <th>Time Spent</th>
-                        <th>Product Progress</th>
-                        <th>Code Contribution &amp; Source Control</th>
+                        <th
+                          data-bs-toggle="tooltip"
+                          data-bs-placement="top"
+                          title="Total hours logged in the Kanban Time Taken or Time Spent fields for this student's sprint cards.">
+                          Time Spent
+                        </th>
+                        <th
+                          data-bs-toggle="tooltip"
+                          data-bs-placement="top"
+                          title="Percentage of assigned sprint cards completed, with a status indicating On Track, Monitor, or Behind.">
+                          Product Progress
+                        </th>
+                        <th
+                          data-bs-toggle="tooltip"
+                          data-bs-placement="top"
+                          title="GitHub contribution score combining Kanban activity, code contributions, pull requests, and code reviews. GH is the composite score; CBP measures code contributions, PR measures pull requests, and RVW measures reviews.">
+                          Code Contribution &amp; Source Control
+                        </th>
                       </tr>
                     </thead>
 
@@ -273,23 +369,56 @@
                   <table class="table table-bordered text-center align-middle mb-0">
                     <thead>
                       <tr>
-                        <th>Client Communication</th>
-                        <th>Demo</th>
+                        <th data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            title="Team evaluation: Did the team meet with the client or attempt to contact them, document meeting feedback, schedule the next meeting, and update the Kanban backlog based on feedback when needed?">
+                          Client Communication
+                        </th>
+                        <th data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            title="Team evaluation: Did the team demonstrate sprint progress, including the project overview, sprint goals, actions from previous reflections, progress evidence, next-sprint goals, and verbal feedback to another team?">
+                          Demo
+                        </th>
                       </tr>
                     </thead>
 
                     <tbody>
                       <tr>
                         <td>
-                          <% client_score = @sponsor_scores_by_team.dig(team.name, sprint) %>
-
-                          <% if client_score.nil? %>
-                            <span class="text-muted">No data available</span>
+                          <% if team.client_notes_url.present? %>
+                            <%= link_to "Client Notes Available",
+                                team.client_notes_url,
+                                class: "btn btn-outline-secondary btn-sm link-button available",
+                                target: "_blank",
+                                rel: "noopener noreferrer",
+                                data: {
+                                  bs_toggle: "tooltip",
+                                  bs_placement: "top",
+                                  bs_title: "Client meeting notes link is available. Meeting activity and rubric compliance have not been verified."
+                                } %>
                           <% else %>
-                            <%= client_score %>
+                            <span class="btn btn-outline-secondary btn-sm link-button missing"
+                                  data-bs-toggle="tooltip"
+                                  data-bs-placement="top"
+                                  title="No client meeting notes link has been provided.">
+                              Client Notes Missing
+                            </span>
                           <% end %>
                         </td>
-                        <td class="text-muted">No data available</td>
+                        <td>
+                          <div class="d-inline-flex align-items-center gap-2">
+                            <span class="ui-tooltip"
+                                  tabindex="0"
+                                  aria-label="No evaluation data available"
+                                  data-tooltip="No evaluation data available">
+                              <%= image_tag "question-circle-fill.svg",
+                                  class: "team-status-icon",
+                                  alt: "",
+                                  aria: { hidden: true } %>
+                            </span>
+                            <span class="text-muted">No data available</span>
+                          </div>
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -302,11 +431,34 @@
                     <thead>
                       <tr>
                         <th>Member</th>
-                        <th>Time Spent</th>
-                        <th>Product Progress</th>
-                        <th>Product Feedback</th>
-                        <th>Code Contribution &amp; Source Control</th>
-                        <th>Status &amp; Reflection</th>
+                        <th
+                          data-bs-toggle="tooltip"
+                          data-bs-placement="top"
+                          title="Total hours logged in the Kanban Time Taken or Time Spent fields for this student's sprint cards.">
+                          Time Spent
+                        </th>
+                        <th
+                          data-bs-toggle="tooltip"
+                          data-bs-placement="top"
+                          title="Percentage of assigned sprint cards completed, with a status indicating On Track, Monitor, or Behind.">
+                          Product Progress
+                        </th>
+                        <th data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            title="Individual evaluation: Did the student evaluate another team, perform user testing or a code review, document the feedback received and planned improvements, and submit proof of feedback given and received?">
+                          Product Feedback
+                        </th>
+                        <th
+                          data-bs-toggle="tooltip"
+                          data-bs-placement="top"
+                          title="GitHub contribution score combining Kanban activity, code contributions, pull requests, and code reviews. GH is the composite score; CBP measures code contributions, PR measures pull requests, and RVW measures reviews.">
+                          Code Contribution &amp; Source Control
+                        </th>
+                        <th data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            title="Individual evaluation: Did the student submit a Reflection Survey describing their progress and experiences?">
+                          Status &amp; Reflection
+                        </th>
                       </tr>
                     </thead>
 
@@ -348,8 +500,19 @@
                             <% end %>
                           </td>
 
-                          <td class="text-muted">
-                            No data available
+                          <td>
+                            <div class="d-inline-flex align-items-center gap-2">
+                              <span class="ui-tooltip"
+                                    tabindex="0"
+                                    aria-label="No evaluation data available"
+                                    data-tooltip="No evaluation data available">
+                                <%= image_tag "question-circle-fill.svg",
+                                    class: "team-status-icon",
+                                    alt: "",
+                                    aria: { hidden: true } %>
+                              </span>
+                              <span class="text-muted">No data available</span>
+                            </div>
                           </td>
 
                           <td>
@@ -426,8 +589,19 @@
 
                             <% end %>
                           </td>
-                          <td class="text-muted">
-                            No data available
+                          <td>
+                            <div class="d-inline-flex align-items-center gap-2">
+                              <span class="ui-tooltip"
+                                    tabindex="0"
+                                    aria-label="No evaluation data available"
+                                    data-tooltip="No evaluation data available">
+                                <%= image_tag "question-circle-fill.svg",
+                                    class: "team-status-icon",
+                                    alt: "",
+                                    aria: { hidden: true } %>
+                              </span>
+                              <span class="text-muted">No data available</span>
+                            </div>
                           </td>
                         </tr>
                       <% end %>
