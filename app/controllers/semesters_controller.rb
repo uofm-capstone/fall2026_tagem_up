@@ -1190,7 +1190,7 @@ end
     pp_band = total_count.zero? ? "No Data" : pp_band_for(pp_completion_pct)
 
     risk_reasons = []
-    risk_reasons << "No cards in Done in #{sprint.name}" if sprint_done_count.zero?
+    risk_reasons << "No completed cards in #{sprint.name}" if !in_current_sprint && sprint.end_date.present? && Date.current > sprint.end_date.to_date && done_status_total.zero?
     if !in_current_sprint && cards_missing_time_spent.positive?
       risk_reasons << "#{cards_missing_time_spent} done cards missing Time Spent"
     end
@@ -1230,7 +1230,7 @@ end
         data_available: github_metrics[:data_available],
         missing_data_flags: github_metrics[:missing_data_flags]
       },
-      missing_sprint_done: sprint_done_count.zero?,
+      missing_sprint_done: done_status_total.zero?,
       at_risk: risk_reasons.any?,
       at_risk_reasons: risk_reasons
     }
@@ -1538,10 +1538,10 @@ end
   end
 
   def pp_band_for(score)
-    return "On Track" if score >= 80
-    return "Monitor" if score >= 60
+    return "High Completion" if score >= 80
+    return "Moderate Completion" if score >= 60
 
-    "Behind"
+    "Low Completion"
   end
 
   def percentage(numerator, denominator)
@@ -1674,17 +1674,22 @@ end
 
   def cards_for_sprint(cards, sprint)
     matching_cards = cards.select { |card| card_matches_sprint?(card, sprint) }
-    return matching_cards if matching_cards.any?
 
-    return [] unless latest_sprint_in_semester?(sprint)
+    return matching_cards unless latest_sprint_in_semester?(sprint)
 
-    # For the latest sprint, include only untagged active/done cards as fallback.
-    cards.select do |card|
+    # Include untagged current work alongside sprint-specific completed cards.
+    current_work = cards.select do |card|
       status = card.status
-      next false unless backlog_status?(status) || todo_status?(status) || in_progress_status?(status) || done_status?(status)
+
+      next false unless backlog_status?(status) ||
+                        todo_status?(status) ||
+                        in_progress_status?(status) ||
+                        done_status?(status)
 
       card_sprint_number(card).blank?
     end
+
+    (matching_cards + current_work).uniq
   end
 
   def assignee_matches_student?(card, student)

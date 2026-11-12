@@ -563,4 +563,185 @@ class SemestersControllerTest < ActiveSupport::TestCase
 
         service.verify
     end
+
+    test "a card with conflicting sprint information matches both sprints under current logic" do
+        controller = SemestersController.new
+
+        sprint_two = Sprint.new(name: "Sprint 2")
+        sprint_three = Sprint.new(name: "Sprint 3")
+
+        card = Struct.new(:status, :fields).new(
+            "Done Archive (Sprint 2)",
+            { "Sprint" => "Sprint 3" }
+        )
+
+        assert controller.send(:card_matches_sprint?, card, sprint_two)
+        assert controller.send(:card_matches_sprint?, card, sprint_three)
+    end
+
+    test "active sprint includes both archived sprint cards and current work" do
+        controller = SemestersController.new
+
+        today = Time.zone.today
+        sprint = Sprint.new(
+            name: "Sprint 4",
+            start_date: today - 7.days,
+            end_date: today + 7.days
+        )
+
+        card_type = Struct.new(:status, :fields)
+
+        cards = [
+            card_type.new("Done Archive (Sprint 4)", {}),
+            card_type.new("In Progress", {}),
+            card_type.new("Todo", {}),
+            card_type.new("Done", {}),
+            card_type.new("Done Archive (Sprint 3)", {})
+        ]
+
+        result = controller.send(:cards_for_sprint, cards, sprint)
+
+        assert_equal 4, result.size
+        assert_includes result.map(&:status), "In Progress"
+        assert_includes result.map(&:status), "Todo"
+        assert_includes result.map(&:status), "Done"
+        assert_not_includes result.map(&:status), "Done Archive (Sprint 3)"
+    end
+
+    test "historical sprint excludes current work and other sprint archives" do
+        controller = SemestersController.new
+
+        sprint = Sprint.new(
+            name: "Sprint 3",
+            start_date: 30.days.ago,
+            end_date: 15.days.ago
+        )
+
+        card_type = Struct.new(:status, :fields)
+
+        cards = [
+            card_type.new("Done Archive (Sprint 3)", {}),
+            card_type.new("Done Archive (Sprint 2)", {}),
+            card_type.new("In Progress", {}),
+            card_type.new("Todo", {}),
+            card_type.new("Done", {})
+        ]
+
+        result = controller.send(:cards_for_sprint, cards, sprint)
+
+        assert_equal ["Done Archive (Sprint 3)"], result.map(&:status)
+    end
+
+    test "active sprint with cards in Done is not flagged for missing completed work" do
+        controller = SemestersController.new
+        controller.instance_variable_set(:@service, GithubService.new)
+
+        today = Time.zone.today
+        sprint = Sprint.new(
+            name: "Sprint 4",
+            start_date: today - 7.days,
+            end_date: today + 7.days
+        )
+
+        card_type = Struct.new(:status, :fields)
+
+        cards = [
+            card_type.new("Done", {
+            "Time Estimate" => 3,
+            "Completed Time" => 2
+            }),
+            card_type.new("In Progress", {
+            "Time Estimate" => 4
+            })
+        ]
+
+        board_health = GithubService::BoardHealth.new(
+            cards, ["Done", "In Progress"], false, []
+        )
+
+        metrics = controller.send(
+            :build_team_sprint_metrics,
+            sprint_cards: cards,
+            board_health: board_health,
+            sprint: sprint,
+            students: []
+        )
+
+        assert_equal 1, metrics[:current_board_done_cards]
+        assert_equal 50.0, metrics[:pp_completion_pct]
+        assert_equal false, metrics[:missing_sprint_done]
+        assert_equal false, metrics[:at_risk]
+    end
+
+    test "active sprint with no completed cards is not automatically at risk" do
+        controller = SemestersController.new
+        controller.instance_variable_set(:@service, GithubService.new)
+
+        today = Time.zone.today
+        sprint = Sprint.new(
+            name: "Sprint 4",
+            start_date: today - 7.days,
+            end_date: today + 7.days
+        )
+
+        card_type = Struct.new(:status, :fields)
+
+        cards = [
+            card_type.new("Todo", { "Time Estimate" => 3 }),
+            card_type.new("In Progress", { "Time Estimate" => 4 })
+        ]
+
+        board_health = GithubService::BoardHealth.new(
+            cards, ["Todo", "In Progress"], false, []
+        )
+
+        metrics = controller.send(
+            :build_team_sprint_metrics,
+            sprint_cards: cards,
+            board_health: board_health,
+            sprint: sprint,
+            students: []
+        )
+
+        assert_equal 0, metrics[:done_cards]
+        assert_equal 0.0, metrics[:pp_completion_pct]
+        assert_equal false, metrics[:at_risk]
+        assert_empty metrics[:at_risk_reasons]
+    end
+
+    test "completed sprint with no completed cards is at risk" do
+        controller = SemestersController.new
+        controller.instance_variable_set(:@service, GithubService.new)
+
+        today = Time.zone.today
+        sprint = Sprint.new(
+            name: "Sprint 3",
+            start_date: today - 30.days,
+            end_date: today - 7.days
+        )
+
+        card_type = Struct.new(:status, :fields)
+
+        cards = [
+            card_type.new("Todo", { "Time Estimate" => 3 }),
+            card_type.new("In Progress", { "Time Estimate" => 4 })
+        ]
+
+        board_health = GithubService::BoardHealth.new(
+            cards, ["Todo", "In Progress"], false, []
+        )
+
+        metrics = controller.send(
+            :build_team_sprint_metrics,
+            sprint_cards: cards,
+            board_health: board_health,
+            sprint: sprint,
+            students: []
+        )
+
+        assert_equal 0, metrics[:done_cards]
+        assert_equal true, metrics[:at_risk]
+        assert_includes metrics[:at_risk_reasons],
+                        "No completed cards in Sprint 3"
+    end
 end

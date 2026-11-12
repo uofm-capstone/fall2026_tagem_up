@@ -70,7 +70,7 @@ module SemestersHelper
   def github_chip_tooltip(chip)
     case chip.to_s.upcase
     when "GH"
-      "GitHub Composite: combined indicator from commit activity, pull request flow, and review participation for the sprint window."
+      "Automated activity score combining Kanban documentation (35%), code contributions (30%), pull requests (20%), and reviews (15%). This is not an official instructor grade."
     when "CBP"
       "Coding Best Practices: based on commit activity and code churn (lines changed) during the sprint window."
     when "PR"
@@ -78,7 +78,7 @@ module SemestersHelper
     when "RVW"
       "Review activity: based on reviews submitted, approvals, and changes-requested signals during the sprint."
     else
-      "GitHub grading component."
+      "Automated development activity indicator, not an official instructor grade."
     end
   end
 
