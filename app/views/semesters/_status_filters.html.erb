@@ -1,38 +1,35 @@
-<!-- Sprint + Rubric Stage Filters -->
-<div class="text-center mb-3 semesters-status__filters">
+<!-- Team, Sprint, and Grading Stage Filters -->
+<div class="semesters-status__filters d-flex flex-wrap justify-content-center align-items-end gap-3 mb-4">
+  <div class="d-flex flex-column align-items-start gap-1" style="width: 200px;">
+    <label for="team-filter" class="fw-bold me-2">Team:</label>
 
-  <div class="mb-2">
-    <strong class="me-2">Sprint:</strong>
+    <select id="team-filter" class="form-select">
+      <option value="all">All Teams</option>
 
-    <% sprint_list.each_with_index do |sprint, index| %>
-      <button
-        class="btn btn-outline-primary m-1 sprint-toggle semesters-status__filter-btn <%= 'active' if index == 0 %>"
-        data-sprint="<%= sprint.parameterize %>">
-        <%= sprint %>
-      </button>
-    <% end %>
+      <% teams.each do |team| %>
+        <option value="<%= team.id %>"><%= team.name %></option>
+      <% end %>
+    </select>
   </div>
 
-  <div>
-    <strong class="me-2">Stage:</strong>
+  <div class="d-flex flex-column align-items-start gap-1" style="width: 200px;">
+    <label for="sprint-filter" class="fw-bold me-2">Sprint:</label>
 
-    <button
-      class="btn btn-outline-secondary m-1 stage-toggle semesters-status__filter-btn active"
-      data-stage="planning">
-      Planning
-    </button>
+    <select id="sprint-filter" class="form-select">
+      <% sprint_list.each do |sprint| %>
+        <option value="<%= sprint.parameterize %>"><%= sprint %></option>
+      <% end %>
+    </select>
+  </div>
 
-    <button
-      class="btn btn-outline-secondary m-1 stage-toggle semesters-status__filter-btn"
-      data-stage="progress">
-      Progress Check
-    </button>
+  <div class="d-flex flex-column align-items-start gap-1" style="width: 200px;">
+    <label for="stage-filter" class="fw-bold me-2">Stage:</label>
 
-    <button
-      class="btn btn-outline-secondary m-1 stage-toggle semesters-status__filter-btn"
-      data-stage="demo">
-      Demo Day
-    </button>
+    <select id="stage-filter" class="form-select">
+      <option value="planning">Planning</option>
+      <option value="progress">Progress Check</option>
+      <option value="demo">Demo Day</option>
+    </select>
   </div>
 
 </div>

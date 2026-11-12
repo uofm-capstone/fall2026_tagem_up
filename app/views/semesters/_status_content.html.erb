@@ -14,7 +14,8 @@
       <% if team_exist(@teams) %>
       
         <%= render "semesters/status_filters",
-          sprint_list: @sprint_list %>
+          sprint_list: @sprint_list,
+          teams: @teams %>
 
         <% if @show_github_inspector %>
           <%= render "semesters/github_data_inspector",

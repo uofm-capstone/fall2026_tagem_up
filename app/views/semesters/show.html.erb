@@ -68,17 +68,24 @@
       tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
 
       // Sprint filter
-      const buttons = document.querySelectorAll(".sprint-toggle");
+      const sprintFilter = document.getElementById("sprint-filter");
       const groups  = document.querySelectorAll(".sprint-group");
-      const stageButtons = document.querySelectorAll(".stage-toggle");
+      const stageFilter = document.getElementById("stage-filter");
+      const teamFilter = document.getElementById("team-filter");
 
-      if (!buttons.length || !groups.length) return;
+      if (!sprintFilter || !groups.length) return;
       function applyStatusFilters() {
-        const activeSprint =
-          document.querySelector(".sprint-toggle.active")?.dataset.sprint;
+        const activeSprint = sprintFilter.value;
 
-        const activeStage =
-          document.querySelector(".stage-toggle.active")?.dataset.stage;
+        const activeStage = stageFilter.value;
+        const selectedTeam = teamFilter?.value || "all";
+
+        document.querySelectorAll(".status-team-card").forEach(card => {
+          const matchesTeam =
+            selectedTeam === "all" || card.dataset.teamId === selectedTeam;
+
+          card.style.display = matchesTeam ? "" : "none";
+        });
 
         groups.forEach(group => {
           const matchesSprint = group.classList.contains(activeSprint);
@@ -103,32 +110,31 @@
         });
         
       }
-      // Sprint buttons
-      buttons.forEach(btn => {
-        // avoid double-binding
-        if (btn.dataset.sprintBound === "1") return;
-        btn.dataset.sprintBound = "1";
+      // Sprint dropdown
+      if (sprintFilter.dataset.sprintBound !== "1") {
+        sprintFilter.dataset.sprintBound = "1";
 
-        btn.addEventListener("click", () => {
-          buttons.forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-
+        sprintFilter.addEventListener("change", () => {
           applyStatusFilters();
         });
-      });
-      // Stage buttons
-      stageButtons.forEach(btn => {
-        // avoid double-binding
-        if (btn.dataset.stageBound === "1") return;
-        btn.dataset.stageBound = "1";
+      }
+      // Stage dropdown
+      if (stageFilter && stageFilter.dataset.stageBound !== "1") {
+        stageFilter.dataset.stageBound = "1";
 
-        btn.addEventListener("click", () => {
-          stageButtons.forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-
+        stageFilter.addEventListener("change", () => {
           applyStatusFilters();
         });
-      });
+      }
+
+      // Team dropdown
+      if (teamFilter && teamFilter.dataset.teamBound !== "1") {
+        teamFilter.dataset.teamBound = "1";
+
+        teamFilter.addEventListener("change", () => {
+          applyStatusFilters();
+        });
+      }
 
       // Apply default active Sprint + Stage when page loads
       applyStatusFilters();
