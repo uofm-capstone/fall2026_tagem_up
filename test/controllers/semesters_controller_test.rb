@@ -564,7 +564,7 @@ class SemestersControllerTest < ActiveSupport::TestCase
         service.verify
     end
 
-    test "a card with conflicting sprint information matches both sprints under current logic" do
+    test "sprint-specific archived status takes priority over conflicting sprint metadata" do
         controller = SemestersController.new
 
         sprint_two = Sprint.new(name: "Sprint 2")
@@ -576,7 +576,7 @@ class SemestersControllerTest < ActiveSupport::TestCase
         )
 
         assert controller.send(:card_matches_sprint?, card, sprint_two)
-        assert controller.send(:card_matches_sprint?, card, sprint_three)
+        refute controller.send(:card_matches_sprint?, card, sprint_three)
     end
 
     test "active sprint includes both archived sprint cards and current work" do

@@ -1764,7 +1764,11 @@ end
     return false if card.blank? || sprint.blank?
 
     status = card.status.to_s
-    return true if done_in_sprint_status?(status, sprint.name)
+
+    # Sprint-specific completed statuses take priority over metadata.
+    if done_in_any_sprint_status?(status)
+      return done_in_sprint_status?(status, sprint.name)
+    end
 
     sprint_number = sprint.name.to_s[/\d+/]
     return false if sprint_number.blank?
