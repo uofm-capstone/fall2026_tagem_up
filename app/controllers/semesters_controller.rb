@@ -1137,7 +1137,13 @@ end
     estimated_hours = sprint_cards.sum { |card| estimate_value(card) }
     time_spent_hours = sprint_cards.sum { |card| spent_value(card) }
     cards_missing_time_spent = sprint_cards.count do |card|
-      done_in_any_sprint_status?(card.status) && spent_value(card).zero?
+      status = card.status.to_s
+
+      completed = done_in_any_sprint_status?(status) ||
+                  done_status?(status) ||
+                  archived_status?(status)
+
+      completed && spent_value(card).zero?
     end
     in_current_sprint = sprint_in_progress?(sprint)
 

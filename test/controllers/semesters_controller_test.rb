@@ -744,4 +744,48 @@ class SemestersControllerTest < ActiveSupport::TestCase
         assert_includes metrics[:at_risk_reasons],
                         "No completed cards in Sprint 3"
     end
+
+    test "completed sprint counts missing time across all completed statuses" do
+        controller = SemestersController.new
+        controller.instance_variable_set(:@service, GithubService.new)
+
+        today = Time.zone.today
+        sprint = Sprint.new(
+            name: "Sprint 3",
+            start_date: today - 30.days,
+            end_date: today - 7.days
+        )
+
+        card_type = Struct.new(:status, :fields)
+
+        cards = [
+            card_type.new("Done", { "Time Estimate" => 3 }),
+            card_type.new("Archived", { "Time Estimate" => 2 }),
+            card_type.new("Done Archive (Sprint 3)", {
+            "Time Estimate" => 4,
+            "Completed Time" => 3
+            })
+        ]
+
+        board_health = GithubService::BoardHealth.new(
+            cards,
+            ["Done", "Archived", "Done Archive (Sprint 3)"],
+            true,
+            []
+        )
+
+        metrics = controller.send(
+            :build_team_sprint_metrics,
+            sprint_cards: cards,
+            board_health: board_health,
+            sprint: sprint,
+            students: []
+        )
+
+        assert_equal 3, metrics[:done_cards]
+        assert_equal 2, metrics[:cards_missing_time_spent]
+        assert_equal true, metrics[:at_risk]
+        assert_includes metrics[:at_risk_reasons],
+                        "2 done cards missing Time Spent"
+    end
 end
