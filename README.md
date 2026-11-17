@@ -27,7 +27,7 @@
 TAG is a web-based application designed to assist professors and teaching assistants in evaluating and grading students. With this application, you can manage grading student an client survey survey's served by Qualtrics (and more features to come).
 
 # Google Cloud Link
-https://tag-app-service-1081269285897.us-central1.run.app/
+[https://tag-app-service-1081269285897.us-central1.run.app/](https://tagem-up-195002336622.us-central1.run.app/users/sign_in)
 This application is built on Ruby on Rails web framework.
 
 ## Prerequisites
