@@ -80,6 +80,24 @@
         const activeStage = stageFilter.value;
         const selectedTeam = teamFilter?.value || "all";
 
+        const rubricSections = document.querySelectorAll("[data-rubric-stage]");
+
+        rubricSections.forEach(section => {
+          section.hidden = section.dataset.rubricStage !== activeStage;
+        });
+
+        const rubricTitle = document.getElementById("gradingRubricModalLabel");
+
+        const rubricTitles = {
+          planning: "Planning Grading Rubric",
+          progress: "Progress Check Grading Rubric",
+          demo: "Demo Day Grading Rubric"
+        };
+
+        if (rubricTitle) {
+          rubricTitle.textContent = rubricTitles[activeStage] || "Grading Rubric";
+        }
+
         document.querySelectorAll(".status-team-card").forEach(card => {
           const matchesTeam =
             selectedTeam === "all" || card.dataset.teamId === selectedTeam;

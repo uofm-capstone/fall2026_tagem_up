@@ -1,0 +1,269 @@
+<div class="modal fade"
+     id="gradingRubricModal"
+     tabindex="-1"
+     aria-labelledby="gradingRubricModalLabel"
+     aria-hidden="true">
+
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title" id="gradingRubricModalLabel">
+          Grading Rubric
+        </h5>
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close">
+        </button>
+      </div>
+
+      <div class="modal-body text-start">
+
+        <p class="text-muted small">
+          Reference the official grading criteria for the selected stage.
+        </p>
+
+        <section data-rubric-stage="planning">
+        <h5 class="fw-bold mb-3">Planning Criteria</h5>
+
+        <div class="mb-4">
+            <h6 class="fw-bold">Feature Selection and Decomposition (20%)</h6>
+            <span class="badge bg-secondary mb-2">Team Evaluation</span>
+
+            <ul>
+            <li>Did you select high-level features with your team for the sprint?</li>
+            <li>Did you decompose those features into SMART tasks?</li>
+            </ul>
+        </div>
+
+        <hr>
+
+        <div class="mb-4">
+            <h6 class="fw-bold">Feature Assignments (20%)</h6>
+            <span class="badge bg-secondary mb-2">Team Evaluation</span>
+
+            <ul>
+            <li>Does each member of your group have assigned tasks?</li>
+            <li>Are tasks assigned so teammates own complete features or vertical slices rather than tasks related to one technical layer?</li>
+            </ul>
+        </div>
+
+        <hr>
+
+        <div class="mb-4">
+            <h6 class="fw-bold">Feature Time Estimates (50%)</h6>
+            <span class="badge bg-primary mb-2">Individual Evaluation</span>
+
+            <ul>
+            <li>Did you estimate your own time to complete each assigned task?</li>
+            <li>Do the estimated times fill your total sprint time?</li>
+            <li>Do the time estimates appear on each task in your Kanban board?</li>
+            </ul>
+        </div>
+
+        <hr>
+
+        <div class="mb-4">
+            <h6 class="fw-bold">Kanban Updates (10%)</h6>
+            <span class="badge bg-secondary mb-2">Team Evaluation</span>
+
+            <p>Did you refresh your Kanban board so that:</p>
+
+            <ul>
+            <li>Selected tasks are in the "Todo" column.</li>
+            <li>Unselected tasks are still in the "Backlog" column.</li>
+            <li>"In Progress" and "Done" columns are empty.</li>
+            <li>Tasks from previous sprints are archived (e.g., "Done in Sprint 1") or recycled to the "Backlog" or "Todo".</li>
+            </ul>
+        </div>
+        </section>
+
+        <section data-rubric-stage="progress" hidden>
+            <h5 class="fw-bold mb-3">Progress Check Criteria</h5>
+
+            <div class="mb-4">
+                <h6 class="fw-bold">Time Spent (50%)</h6>
+                <span class="badge bg-primary mb-2">Individual Evaluation</span>
+
+                <ul>
+                <li>Did you fill out your timesheet?</li>
+                <li>Did you put in at least 5 days of work every 7 days and average 9 hours per 7 days (about 1.3 hours per day) of effort so far this sprint?</li>
+                <li>Did you deposit all of your work somewhere visible to the team?</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <div class="mb-4">
+                <h6 class="fw-bold">Product Progress (20%)</h6>
+                <span class="badge bg-primary mb-2">Individual Evaluation</span>
+
+                <p>Are you on track to meet your own goals?</p>
+
+                <p class="fw-bold text-center small">OR</p>
+
+                <p>Can you explain specifically what you worked on and why your goals are not on track?</p>
+
+                <p class="fw-bold text-center small">AND, IN EITHER CASE</p>
+
+                <p>Do your Kanban boards reflect current progress and are actual task times listed for completed tasks?</p>
+            </div>
+
+            <hr>
+
+            <div class="mb-4">
+                <h6 class="fw-bold">Code Contribution and Source Control (10%)</h6>
+                <span class="badge bg-primary mb-2">Individual Evaluation</span>
+
+                <ul>
+                <li>Did you personally author and commit code changes so far this sprint?</li>
+                <li>Did you use feature branches rather than commit directly to the shared main branch?</li>
+                <li>Were your commits small and focused, without combining multiple features or unrelated changes?</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <div class="mb-4">
+                <h6 class="fw-bold">Client Communication (10%)</h6>
+                <span class="badge bg-secondary mb-2">Team Evaluation</span>
+
+                <ul>
+                <li>Did you meet with your client since the start of the sprint, or make reasonable attempts to meet if they were unavailable?</li>
+                <li>Did you take notes during each of your meetings to document their feedback?</li>
+                <li>Do you know when your next client meeting will happen?</li>
+                <li>Has the Kanban's backlog been updated based on client or other feedback if needed?</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <div class="mb-4">
+                <h6 class="fw-bold">Status and Reflection (10%)</h6>
+                <span class="badge bg-secondary mb-2">Team Evaluation</span>
+
+                <p>Did you share with the professor how things are going, including any current blockers, risks, or support needs?</p>
+            </div>
+        </section>
+
+        <section data-rubric-stage="demo" hidden>
+            <h5 class="fw-bold mb-3">Demo Day Criteria</h5>
+
+            <div class="mb-4">
+                <h6 class="fw-bold">Time Spent (30%)</h6>
+                <span class="badge bg-primary mb-2">Individual Evaluation</span>
+
+                <ul>
+                <li>Did you fill out your timesheet?</li>
+                <li>Did you put in at least 5 days of work every 7 days and average 9 hours per 7 days (about 1.3 hours per day) of effort since this sprint's progress check?</li>
+                <li>Did you deposit all of your work somewhere visible to the team?</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <div class="mb-4">
+                <h6 class="fw-bold">Product Progress (20%)</h6>
+                <span class="badge bg-primary mb-2">Individual Evaluation</span>
+
+                <p>Did you meet your own goals for the sprint?</p>
+
+                <p class="fw-bold text-center small">OR</p>
+
+                <p>Can you explain specifically what you worked on and why your original goals were not met?</p>
+
+                <p class="fw-bold text-center small">AND, IN EITHER CASE</p>
+
+                <p>Do your Kanban boards reflect current progress and are actual task times listed for completed tasks?</p>
+            </div>
+
+            <hr>
+
+            <div class="mb-4">
+                <h6 class="fw-bold">Product Feedback (10%)</h6>
+                <span class="badge bg-primary mb-2">Individual Evaluation</span>
+
+                <ul>
+                <li>Did you evaluate another team (30min-1hour)?</li>
+                <li>Did you conduct user testing, a code review, or another appropriate review of your work?</li>
+                <li>Did you document the feedback you received and list your plans to address it?</li>
+                </ul>
+
+                <p class="fw-bold">
+                You must submit proof of both the feedback given and received!
+                </p>
+            </div>
+
+            <hr>
+
+            <div class="mb-4">
+                <h6 class="fw-bold">Code Contribution and Source Control (10%)</h6>
+                <span class="badge bg-primary mb-2">Individual Evaluation</span>
+
+                <ul>
+                <li>Did you personally author and commit code changes since the last progress check?</li>
+                <li>Did you use feature branches rather than commit directly to the shared main branch?</li>
+                <li>Were your commits small and focused, without combining multiple features or unrelated changes?</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <div class="mb-4">
+                <h6 class="fw-bold">Client Communication (10%)</h6>
+                <span class="badge bg-secondary mb-2">Team Evaluation</span>
+
+                <ul>
+                <li>Did you meet with your client since the progress check, or make reasonable attempts to meet if they were unavailable?</li>
+                <li>Did you take notes during each of your meetings to document their feedback?</li>
+                <li>Do you know when your next client meeting will happen?</li>
+                <li>Has the Kanban's backlog been updated based on client or other feedback if needed?</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <div class="mb-4">
+                <h6 class="fw-bold">Status and Reflection (10%)</h6>
+                <span class="badge bg-primary mb-2">Individual Evaluation</span>
+
+                <p>Did you share with the professor how things are going via the Reflection Survey?</p>
+            </div>
+
+            <hr>
+
+            <div class="mb-4">
+                <h6 class="fw-bold">Demo (10%)</h6>
+                <span class="badge bg-secondary mb-2">Team Evaluation</span>
+
+                <p>Did you demo your progress?</p>
+
+                <p>Did your demo include:</p>
+
+                <ul>
+                <li>Project overview</li>
+                <li>Goals from the start of the sprint</li>
+                <li>Actions taken from last sprint's reflection</li>
+                <li>Coverage of sprint progress with pictures or a live demo</li>
+                <li>Goals for the next sprint</li>
+                </ul>
+
+                <p>Did your team provide verbal feedback to another team after their demo?</p>
+            </div>
+            </section>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button"
+                class="btn btn-outline-secondary"
+                data-bs-dismiss="modal">
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
