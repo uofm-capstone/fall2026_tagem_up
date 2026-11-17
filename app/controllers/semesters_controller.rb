@@ -1457,10 +1457,22 @@ end
   end
 
   def status_snapshot_cache_key
+    sprint_fingerprint = @semester.sprints.order(:id).map do |sprint|
+      [
+        sprint.id,
+        sprint.name,
+        sprint.start_date,
+        sprint.end_date
+      ].join(":")
+    end.join("|")
+
+    sprint_digest = Digest::SHA256.hexdigest(sprint_fingerprint)
+
     [
       "semester_status_snapshot_html",
       "manual:v1",
       @semester.id,
+      "sprints:#{sprint_digest}",
       "debug:#{params[:debug]}",
       "inspector:#{@show_github_inspector ? 1 : 0}"
     ]

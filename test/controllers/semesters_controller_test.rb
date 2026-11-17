@@ -788,4 +788,80 @@ class SemestersControllerTest < ActiveSupport::TestCase
         assert_includes metrics[:at_risk_reasons],
                         "2 done cards missing Time Spent"
     end
+    test "snapshot cache key remains stable when sprint dates are unchanged" do
+        sprints = [build_test_sprint]
+        controller = build_snapshot_controller(sprints)
+
+        first_key = controller.send(:status_snapshot_cache_key)
+        second_key = controller.send(:status_snapshot_cache_key)
+
+        assert_equal first_key, second_key
+    end
+
+    test "snapshot cache key changes when sprint dates change" do
+        sprint = build_test_sprint
+        controller = build_snapshot_controller([sprint])
+
+        original_key = controller.send(:status_snapshot_cache_key)
+
+        sprint.end_date += 1.day
+        updated_key = controller.send(:status_snapshot_cache_key)
+
+        assert_not_equal original_key, updated_key
+
+        sprint.start_date += 1.day
+
+        assert_not_equal updated_key,
+                         controller.send(:status_snapshot_cache_key)
+    end
+
+    test "snapshot cache key changes when a sprint is added" do
+        sprints = []
+        controller = build_snapshot_controller(sprints)
+
+        original_key = controller.send(:status_snapshot_cache_key)
+
+        sprints << build_test_sprint
+
+        assert_not_equal original_key,
+                         controller.send(:status_snapshot_cache_key)
+    end
+
+    test "snapshot cache key changes when a sprint is removed" do
+        sprints = [build_test_sprint]
+        controller = build_snapshot_controller(sprints)
+
+        original_key = controller.send(:status_snapshot_cache_key)
+
+        sprints.clear
+
+        assert_not_equal original_key,
+                         controller.send(:status_snapshot_cache_key)
+    end
+
+    private
+
+    def build_test_sprint
+        Sprint.new(
+            id: 1,
+            name: "Sprint 1",
+            start_date: Date.new(2026, 10, 1),
+            end_date: Date.new(2026, 10, 15)
+        )
+    end
+
+    def build_snapshot_controller(sprints)
+        controller = SemestersController.new
+        controller.params = ActionController::Parameters.new
+
+        def sprints.order(*args)
+            self
+        end
+
+        semester = Struct.new(:id, :sprints).new(1, sprints)
+
+        controller.instance_variable_set(:@semester, semester)
+
+        controller
+    end
 end

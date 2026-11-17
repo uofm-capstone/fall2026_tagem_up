@@ -19,11 +19,21 @@
 #  fk_rails_...  (semester_id => semesters.id)
 #
 class Sprint < ApplicationRecord
+  belongs_to :semester
 
-    belongs_to :semester
+  validates :name, presence: true
+  validates :start_date, presence: true
+  validates :end_date, presence: true
 
-    validates :name, presence: true
-    validates :start_date, presence: true
-    validates :end_date, presence: true
+  validate :valid_date_range
 
+  private
+
+  def valid_date_range
+    return if start_date.blank? || end_date.blank?
+
+    if end_date < start_date
+      errors.add(:end_date, "must be on or after the start date")
+    end
+  end
 end
