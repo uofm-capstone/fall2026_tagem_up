@@ -28,8 +28,7 @@ Rails.application.routes.draw do
   post 'semesters/:id/upload_sprint_csv', to: 'semesters#upload_sprint_csv', as: 'upload_sprint_csv_semester'
 
   # Survey controller
-  get "client_status_survey", to: "pages#client_status_survey", as: :client_status_survey
-
+  get "student_survey", to: "pages#student_survey", as: :student_survey
   # Student controller
   get 'students', to: 'students#index', as: 'students'
   post 'students', to: 'students#create'

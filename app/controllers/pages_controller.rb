@@ -3,6 +3,6 @@ class PagesController < ApplicationController
     render :home
   end
 
-  def client_status_survey
+  def student_survey
   end
 end
