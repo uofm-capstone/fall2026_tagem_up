@@ -39,9 +39,14 @@ RUN mkdir -p tmp/pids tmp/cache tmp/sockets
 # Ensure entrypoint is executable
 RUN chmod +x ./docker-entry.sh
 
-# Precompile assets (needs a dummy secret + dummy DB URL at build time)
-RUN SECRET_KEY_BASE=dummy DATABASE_URL=postgres://user:pass@localhost:5432/dummy bundle exec rake assets:precompile || true
-
+# Precompile Rails assets using temporary build-only values
+RUN SECRET_KEY_BASE=dummy \
+    DATABASE_USER=dummy \
+    DB_PASSWORD=dummy \
+    DATABASE_NAME=dummy \
+    DATABASE_HOST=localhost \
+    RAILS_ENV=production \
+    bundle exec rails assets:precompile
 # Expose (harmless on Cloud Run)
 EXPOSE 8080
 
