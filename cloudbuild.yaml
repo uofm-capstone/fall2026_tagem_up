@@ -1,61 +1,27 @@
-# Cloud Build config (parameterized)
+# TAG'em Up - Google Cloud Build configuration
 
-# ---- Substitutions you can override per build/trigger ----
-# Example values shown; change as needed when you run the build.
 substitutions:
-  _REGION: "us-central1"             # your Cloud Run URL is us-south1
-  _REPO: "spring2026-tag-repo"          # your Artifact Registry repo name
-  _IMAGE: "tag-app"          # your image name
-  _SERVICE: "tag-app-service"   # your Cloud Run service name
-  _SQL_REGION: "us-central1"         # set to your Cloud SQL instance’s region
-  _SQL_INSTANCE: "tag-app-db"  # your Cloud SQL instance name
+  _REGION: "us-central1"
+  _REPO: "tagem-up-repo"
+  _IMAGE: "tagem-up"
 
 steps:
-  # Step 1: Build Docker image
+  # Build the production Docker image
   - name: "gcr.io/cloud-builders/docker"
     args:
       - "build"
       - "-t"
-      - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE}"
+      - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE}:latest"
       - "."
 
-  # Step 2: Push image to Artifact Registry
+  # Push the image to Artifact Registry
   - name: "gcr.io/cloud-builders/docker"
     args:
       - "push"
-      - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE}"
-
-  # Step 3: Deploy to Cloud Run
-  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
-    entrypoint: "gcloud"
-    args:
-      - "run"
-      - "deploy"
-      - "${_SERVICE}"
-      - "--image"
-      - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE}"
-      - "--region"
-      - "${_REGION}"
-      - "--platform"
-      - "managed"
-
-      # Attach Cloud SQL instance (use the SQL instance's region)
-      - "--add-cloudsql-instances"
-      - "${PROJECT_ID}:${_SQL_REGION}:${_SQL_INSTANCE}"
-
-      # Rails env
-      - "--set-env-vars"
-      - "RAILS_ENV=production,RAILS_SERVE_STATIC_FILES=true,LLM_API_URL=http://10.128.0.7:11434"
-
-      # Secrets (must exist in this project)
-      - "--set-secrets"
-      - "SECRET_KEY_BASE=secret-key-base:latest,DB_PASSWORD=db-password:latest,GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON_KEY=google-sheets-service-account-json-key:latest,SENDGRID_API_KEY=SENDGRID_API_KEY:latest"
-
-      # Auth
-      - "--allow-unauthenticated"
+      - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE}:latest"
 
 images:
-  - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE}"
+  - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE}:latest"
 
 options:
   logging: CLOUD_LOGGING_ONLY

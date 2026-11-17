@@ -11,3 +11,4 @@ config/master.key
 .env
 config/credentials.yml.enc
 /tmp/pids/server.pid
+github-app.pem
