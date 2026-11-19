@@ -1,8 +1,9 @@
 .app-sidebar {
   width: var(--sidebar-width);
-  min-height: 100vh;
-  background: var(--surface-sidebar);
-  color: #e2e8f0;
+  height: 100vh;
+  overflow-y: auto;
+  background-color: var(--surface-sidebar) !important;
+  color: #a5c9f8;
   padding: var(--space-6) var(--space-4);
   position: fixed;
   top: 0;
@@ -45,8 +46,22 @@
   color: #fff;
 }
 
-@media (max-width: 992px) {
+
+
+.sidebar-toggle,
+.sidebar-close {
+  display: none;
+}
+
+@media (max-width: 991.98px) {
   .app-sidebar {
-    display: none;
+    --bs-offcanvas-width: var(--sidebar-width);
+    background-color: var(--surface-sidebar);
+    max-width: 85vw;
+  }
+
+  .sidebar-toggle,
+  .sidebar-close {
+    display: inline-flex;
   }
 }

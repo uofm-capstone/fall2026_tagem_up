@@ -1,5 +1,15 @@
 <header class="topbar">
   <div class="topbar__left">
+    <% if user_signed_in? %>
+      <button class="btn sidebar-toggle" type="button"
+              data-bs-toggle="offcanvas"
+              data-bs-target="#appSidebar"
+              aria-controls="appSidebar"
+              aria-label="Open navigation">
+        <i class="bi bi-list fs-4"></i>
+      </button>
+    <% end %>
+
     <%= link_to home_path, class: "topbar__brand" do %>
       <span class="topbar__brand-mark" aria-hidden="true">TAG</span>
       <span class="topbar__brand-text">Tool-Assisted Grading</span>
