@@ -1,10 +1,30 @@
 <%= turbo_frame_tag "semester-status-content" do %>
-  <div data-status-content-ready="1" class="d-none" aria-hidden="true"></div>
+  <div data-status-content-ready="1"
+       data-status-refreshing="<%= @status_snapshot_refreshing ? '1' : '0' %>"
+       class="d-none"
+       aria-hidden="true"></div>
 
   <% if @status_snapshot_built_at.present? %>
     <div class="alert alert-info text-center mb-3">
-      Status snapshot built at <%= @status_snapshot_built_at.in_time_zone("America/Chicago").strftime("%b %-d, %Y %-l:%M %p CT") %>.
-      Refreshing without the update button should reuse this snapshot.
+      Status snapshot updated
+      <strong id="status-snapshot-age"
+              data-built-at="<%= @status_snapshot_built_at.iso8601 %>"
+              title="<%= @status_snapshot_built_at.in_time_zone('America/Chicago').strftime('%b %-d, %Y %-l:%M %p CT') %>">
+        <%= time_ago_in_words(@status_snapshot_built_at) %> ago
+      </strong>.
+    </div>
+  <% end %>
+
+  <% if @status_snapshot_refreshing %>
+    <div class="alert alert-info text-center mb-3" role="status">
+      <span class="spinner-border spinner-border-sm me-2"
+            aria-hidden="true"></span>
+      Updating status snapshot. Previously saved metrics are displayed below.
+    </div>
+  <% elsif @status_snapshot_failed %>
+    <div class="alert alert-warning text-center mb-3" role="alert">
+      Snapshot update failed. Previously saved metrics are displayed below.
+      Please try updating again.
     </div>
   <% end %>
 

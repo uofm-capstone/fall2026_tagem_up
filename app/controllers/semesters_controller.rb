@@ -26,9 +26,25 @@ class SemestersController < ApplicationController
   before_action :set_semester, only: [:show, :edit, :update, :destroy, :sponsor_responses, :upload_sponsor_csv, :sponsor_response_details]
   before_action :check_ownership, only: [:destroy]
   before_action :check_admin
-  before_action :check_ta_or_admin, only: [:sponsor_responses, :upload_sponsor_csv, :sponsor_response_details]
-  skip_before_action :check_admin, only: [:sponsor_responses, :upload_sponsor_csv, :sponsor_response_details]
+  before_action :check_ta_or_admin, only: [
+    :home,
+    :select,
+    :sponsor_responses,
+    :upload_sponsor_csv,
+    :sponsor_response_details,
+    :status,
+    :status_content
+  ]
 
+  skip_before_action :check_admin, only: [
+    :home,
+    :select,
+    :sponsor_responses,
+    :upload_sponsor_csv,
+    :sponsor_response_details,
+    :status,
+    :status_content
+  ]
   # --------------------------------------------------------
   # SETUP & AUTHORIZATION HELPERS
   # --------------------------------------------------------
@@ -357,36 +373,52 @@ end
     return head :not_found unless @semester
 
     session[:last_viewed_semester_id] = @semester.id
+
     @force_github_refresh = session.delete(:status_force_refresh_once) ||
-                ActiveModel::Type::Boolean.new.cast(params[:force_refresh])
-    @show_github_inspector = current_user.admin? && params[:debug] == "github"
+      ActiveModel::Type::Boolean.new.cast(params[:force_refresh])
+
+    @show_github_inspector = current_user.admin? &&
+      params[:debug] == "github"
+
+    response.headers["Cache-Control"] = "no-store"
 
     unless status_snapshot_cache_enabled?
       build_status_payload!
       return render partial: "semesters/status_content"
     end
-
-    cache_key = status_snapshot_cache_key
+    unless status_snapshot_background_enabled?
+      return render_synchronous_status_snapshot
+    end
+    coordinator = StatusSnapshotCoordinator.new(
+      semester: @semester,
+      user: current_user
+    )
 
     if @force_github_refresh
-      build_status_payload!
-      @status_snapshot_built_at = Time.current
-      rendered_content = render_to_string(partial: "semesters/status_content")
-      Rails.cache.write(cache_key, rendered_content)
-      return render html: rendered_content.html_safe
+      coordinator.request_refresh(force_refresh: true)
     end
 
-    cached_html = Rails.cache.read(cache_key)
-    if cached_html.present?
-      Rails.logger.info("Status snapshot cache hit for semester #{@semester.id}")
-      return render html: cached_html.html_safe
+    @status_snapshot_refreshing = coordinator.refreshing?
+    @status_snapshot_failed =
+      Rails.cache.read("#{coordinator.cache_key}:error").present?
+
+    snapshot = coordinator.snapshot
+
+    unless snapshot.present?
+      return render partial: "semesters/status_content_cache_prompt"
     end
 
-    Rails.logger.info("Status snapshot cache miss for semester #{@semester.id}")
+    @status_snapshot_built_at = snapshot[:built_at]
 
-    render partial: "semesters/status_content_cache_prompt"
+    load_status_snapshot_payload!(snapshot[:payload])
+
+    render partial: "semesters/status_content"
+
   rescue StandardError => e
-    Rails.logger.error("Status content build failed for semester #{params[:id]}: #{e.class} - #{e.message}")
+    Rails.logger.error(
+      "Status content failed for semester #{params[:id]}: #{e.class} - #{e.message}"
+    )
+
     render partial: "semesters/status_content_timeout"
   end
 
@@ -662,7 +694,61 @@ end
       }
     end
   end
+  def render_synchronous_status_snapshot
+    cache_key = [
+      status_snapshot_cache_key,
+      "user:#{current_user.id}"
+    ].flatten
 
+    unless @force_github_refresh
+      cached_html = Rails.cache.read(cache_key)
+
+      if cached_html.present?
+        return render html: cached_html.html_safe
+      end
+
+      return render partial: "semesters/status_content_cache_prompt"
+    end
+
+    build_status_payload!
+
+    @status_snapshot_built_at = Time.current
+
+    rendered_content = render_to_string(
+      partial: "semesters/status_content"
+    )
+
+    Rails.cache.write(cache_key, rendered_content)
+
+    render html: rendered_content.html_safe
+  end
+  def load_status_snapshot_payload!(payload)
+    @teams = @semester.teams.includes(:students)
+    @sprint_list = @semester.sprints.pluck(:name)
+    @sprints = @semester.sprints.order(:start_date)
+
+    @team_project_data = payload.fetch(:team_project_data)
+    @team_board_health = payload.fetch(:team_board_health)
+    @team_sprint_metrics = payload.fetch(:team_sprint_metrics)
+    @team_status_overview = payload.fetch(:team_status_overview)
+    @team_overview_by_id = payload.fetch(:team_overview_by_id)
+    @github_inspector = payload.fetch(:github_inspector)
+    @status_metrics = payload.fetch(:status_metrics)
+
+    @flags = {}
+
+    @sprint_list.each do |sprint|
+      @flags[sprint] = {}
+
+      @teams.each do |team|
+        @flags[sprint][team.name] =
+          get_flags(@semester, sprint, team.name)
+      end
+    end
+
+    build_sponsor_ui_payload!
+    build_sponsor_scores_by_team!
+  end
   def build_status_payload!
     @teams = @semester.teams.includes(:students)
     @sprint_list = @semester.sprints.pluck(:name)
@@ -1455,7 +1541,11 @@ end
   def status_snapshot_cache_enabled?
     !Rails.cache.class.name.include?("NullStore")
   end
-
+  def status_snapshot_background_enabled?
+    ActiveModel::Type::Boolean.new.cast(
+      ENV.fetch("STATUS_BACKGROUND_ENABLED", Rails.env.production? ? "false" : "true")
+    )
+  end
   def status_snapshot_cache_key
     sprint_fingerprint = @semester.sprints.order(:id).map do |sprint|
       [

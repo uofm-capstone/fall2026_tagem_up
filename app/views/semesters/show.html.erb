@@ -29,9 +29,6 @@
                 <%= link_to "Manage Sprint Dates",
                   semester_sprints_path(@semester),
                   class: "btn btn-sm btn-outline-secondary" %>
-                <% if flash[:notice].to_s.downcase.include?("snapshot") %>
-                  <span class="badge text-bg-info align-self-center">Snapshot update requested</span>
-                <% end %>
               </div>
               <div class="text-muted small">
               </div>
@@ -162,7 +159,51 @@
     let statusElapsedTimer;
     let statusElapsedSeconds = 0;
     const STATUS_REQUEST_TIMEOUT_MS = 60000;
+    let statusSnapshotAgeTimer;
 
+    function updateStatusSnapshotAge() {
+      const element = document.getElementById("status-snapshot-age");
+      if (!element) return;
+
+      const builtAt = Date.parse(element.dataset.builtAt);
+      if (!Number.isFinite(builtAt)) return;
+
+      const seconds = Math.max(
+        0,
+        Math.floor((Date.now() - builtAt) / 1000)
+      );
+
+      let value;
+      let unit;
+
+      if (seconds < 60) {
+        value = seconds;
+        unit = "second";
+      } else if (seconds < 3600) {
+        value = Math.floor(seconds / 60);
+        unit = "minute";
+      } else if (seconds < 86400) {
+        value = Math.floor(seconds / 3600);
+        unit = "hour";
+      } else {
+        value = Math.floor(seconds / 86400);
+        unit = "day";
+      }
+
+      element.textContent =
+        `${value} ${unit}${value === 1 ? "" : "s"} ago`;
+    }
+
+    function startStatusSnapshotAge() {
+      clearInterval(statusSnapshotAgeTimer);
+
+      updateStatusSnapshotAge();
+
+      statusSnapshotAgeTimer = setInterval(
+        updateStatusSnapshotAge,
+        1000
+      );
+    }
     function ensurePanelVisible() {
       const panel = document.getElementById("status-load-panel");
       if (!panel) return;
@@ -331,7 +372,31 @@
         }
       });
     }
+    let statusSnapshotPollTimer;
 
+    function stopStatusSnapshotPolling() {
+      clearTimeout(statusSnapshotPollTimer);
+    }
+
+    function scheduleStatusSnapshotPolling() {
+      stopStatusSnapshotPolling();
+
+      const frame = document.getElementById("semester-status-content");
+      if (!frame) return;
+
+      const refreshing = frame.querySelector(
+        '[data-status-refreshing="1"]'
+      );
+
+      if (!refreshing) return;
+
+      statusSnapshotPollTimer = setTimeout(() => {
+        if (!frame.isConnected) return;
+
+        frame.dataset.requestStarted = "0";
+        requestStatusContent();
+      }, 5000);
+    }
     // Fallback loader: only runs if Turbo frame hydration appears stuck.
     async function requestStatusContent() {
       const frame = document.getElementById("semester-status-content");
@@ -375,8 +440,20 @@
 
         if (hasRenderableStatusContent(frame)) {
           frame.dataset.loaded = "1";
-          completeStatusProgress("Status metrics loaded.");
+
+          const refreshing = frame.querySelector(
+            '[data-status-refreshing="1"]'
+          );
+
+          completeStatusProgress(
+            refreshing
+              ? "Snapshot generation in progress."
+              : "Status content loaded."
+          );
+
           initTooltipsAndSprintFilter();
+          startStatusSnapshotAge();
+          scheduleStatusSnapshotPolling();
         }
       } catch (e) {
         const panel = document.getElementById("status-load-panel");
@@ -397,7 +474,16 @@
         if (timeoutId) clearTimeout(timeoutId);
       }
     }
+    function cleanupStatusTimers() {
+      clearInterval(statusProgressTimer);
+      clearInterval(statusElapsedTimer);
+      clearInterval(statusSnapshotAgeTimer);
+      stopStatusSnapshotPolling();
+    }
 
+    document.addEventListener("turbo:before-cache", cleanupStatusTimers);
+    document.addEventListener("turbo:before-render", cleanupStatusTimers);
+    window.addEventListener("pagehide", cleanupStatusTimers);
     document.addEventListener("DOMContentLoaded", initTooltipsAndSprintFilter);
     document.addEventListener("turbo:load", initTooltipsAndSprintFilter);
     document.addEventListener("DOMContentLoaded", startStatusProgress);

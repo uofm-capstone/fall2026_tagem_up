@@ -1,17 +1,37 @@
 <%= turbo_frame_tag "semester-status-content" do %>
-  <div data-status-content-ready="1" class="d-none" aria-hidden="true"></div>
+  <div data-status-content-ready="1"
+       data-status-refreshing="<%= @status_snapshot_refreshing ? '1' : '0' %>"
+       class="d-none"
+       aria-hidden="true"></div>
 
   <div class="row">
     <div class="mt-4 text-center">
-      <h2>Team Status</h2>
-      <div class="alert alert-info" role="status">
-        No cached status snapshot exists yet for this semester.
-        Click the button below to fetch GitHub data once and save it.
-        After that, the page will keep showing the saved snapshot until you click update again.
-      </div>
-      <%= link_to "Build Initial Status Snapshot",
-        semester_status_path(@semester, force_refresh: 1, debug: params[:debug]),
-        class: "btn btn-primary btn-sm" %>
+
+      <% if @status_snapshot_refreshing %>
+        <div class="alert alert-info" role="status">
+          <span class="spinner-border spinner-border-sm me-2"
+                aria-hidden="true"></span>
+          Generating the status snapshot in the background.
+          This page will update automatically when it is ready.
+        </div>
+      <% else %>
+        <% if @status_snapshot_failed %>
+          <div class="alert alert-warning" role="alert">
+            Status snapshot generation failed. Please try again.
+          </div>
+        <% else %>
+          <div class="alert alert-info" role="status">
+            No saved status snapshot is available for this semester.
+            Click below to generate one.
+          </div>
+        <% end %>
+
+        <%= link_to(
+          @status_snapshot_failed ? "Retry Snapshot Generation" : "Build Initial Status Snapshot",
+          semester_status_path(@semester, force_refresh: 1, debug: params[:debug]),
+          class: "btn btn-primary btn-sm"
+        ) %>
+      <% end %>
     </div>
   </div>
 <% end %>
