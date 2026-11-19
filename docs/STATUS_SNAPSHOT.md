@@ -124,3 +124,17 @@ job processing, and a suitable worker execution environment.
 
 See [Status Snapshot Architecture](STATUS_SNAPSHOT.md) for configuration
 options, deployment requirements, and known limitations.
+
+## 11. Full-Roster Scalability Validation
+
+The background snapshot implementation was manually tested using a full semester roster consisting of 11 teams and approximately 44 students.
+
+Initial snapshot generation and subsequent manual refreshes completed successfully without encountering request timeouts.
+
+All team status data was displayed, existing metrics remained accessible during background refreshes, and the snapshot age indicator correctly reset upon completion.
+
+Reloading the Status page successfully retrieved the existing cached
+snapshot without triggering unnecessary regeneration or resetting
+the snapshot age.
+
+These results demonstrate that the implementation can accommodate the current semester workload in the local development environment. Production infrastructure configuration, concurrent-user testing, and deployment validation remain outstanding.
