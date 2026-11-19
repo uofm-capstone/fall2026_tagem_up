@@ -1,8 +1,9 @@
 .app-sidebar {
   width: var(--sidebar-width);
-  min-height: 100vh;
-  background: var(--surface-sidebar);
-  color: #e2e8f0;
+  height: 100vh;
+  overflow-y: auto;
+  background-color: var(--surface-sidebar) !important;
+  color: #a5c9f8;
   padding: var(--space-6) var(--space-4);
   position: fixed;
   top: 0;
@@ -45,10 +46,7 @@
   color: #fff;
 }
 
-.app-sidebar {
-  height: 100vh;
-  overflow-y: auto;
-}
+
 
 .sidebar-toggle,
 .sidebar-close {
