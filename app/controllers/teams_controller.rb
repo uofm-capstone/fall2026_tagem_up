@@ -5,7 +5,7 @@ class TeamsController < ApplicationController
   load_and_authorize_resource class: Team
 
   
-  
+  #play around with this for ta access
   def index
     if current_user.ta?
       # Get the semester associated with the TA's assigned teams.
@@ -47,7 +47,7 @@ class TeamsController < ApplicationController
   end
 
 
-
+  
   def show
     authorize! :read, @team
     @team_members = @team.students
