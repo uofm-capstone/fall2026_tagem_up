@@ -12,7 +12,7 @@
     <div class="text-center semesters-status__content">
 
       <% if team_exist(@teams) %>
-      
+
         <%= render "semesters/status_filters",
           sprint_list: @sprint_list %>
 
@@ -30,15 +30,16 @@
           team_sprint_metrics: @team_sprint_metrics,
           status_metrics: @status_metrics %>
 
-              
         <%#= render "semesters/demo_day_status",
           teams: @teams,
           sprint_list: @sprint_list,
           team_sprint_metrics: @team_sprint_metrics #%>
 
-        <div id="sponsor-modals-container">
-          <%= render "semesters/sponsor_response_modals" %>
-        </div>
+        <% if current_user.role == "admin" || current_user.ta? %>
+          <div id="sponsor-modals-container">
+            <%= render "semesters/sponsor_response_modals" %>
+          </div>
+        <% end %>
 
       <% else %>
 

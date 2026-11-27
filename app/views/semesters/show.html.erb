@@ -2,384 +2,575 @@
   title: "Semester Overview",
   subtitle: @semester.name_for_select %>
 
-  <div class="container mt-3 semesters-show">
-    <div class="d-flex">
-      <div class="main-content">
+<div class="container mt-3 semesters-show">
+  <div class="d-flex">
+    <div class="main-content">
 
-        <!-- Warning for No Student CSV Uploaded -->
-        <% unless @semester.student_csv.attached? %>
-          <div class="d-flex justify-content-center mt-4 mb-4">
-            <div class="card w-100 border-danger">
-              <div class="card-body bg-danger text-white">
-                <p class="card-text text-center">
-                  <strong>Attention:</strong> No Student CSV has been uploaded for this semester. Please upload the student CSV to display the data.
-                </p>
-              </div>
+      <!-- Warning for No Student CSV Uploaded -->
+      <% if !current_user.student? && !@semester.student_csv.attached? %>
+        <div class="d-flex justify-content-center mt-4 mb-4">
+          <div class="card w-100 border-danger">
+            <div class="card-body bg-danger text-white">
+              <p class="card-text text-center">
+                <strong>Attention:</strong> No Student CSV has been uploaded for this semester. Please upload the student CSV to display the data.
+              </p>
             </div>
           </div>
-        <% end %>
+        </div>
+      <% end %>
 
-        <section class="semesters-status__section mt-4 text-center">
-            <h2 class="semesters-status__title">Team Status</h2>
-            <% if current_user&.admin? || current_user&.ta? %>
-              <div class="mb-2 d-flex justify-content-center gap-2">
-                <%= link_to "Update Cached Status Data",
-                  semester_status_path(@semester, force_refresh: 1, debug: params[:debug]),
-                  class: "btn btn-sm btn-outline-primary" %>
-                <%= link_to "Manage Sprint Dates",
-                  semester_sprints_path(@semester),
-                  class: "btn btn-sm btn-outline-secondary" %>
-                <% if flash[:notice].to_s.downcase.include?("snapshot") %>
-                  <span class="badge text-bg-info align-self-center">Snapshot update requested</span>
-                <% end %>
-              </div>
-              <div class="text-muted small">
-              </div>
+      <section class="semesters-status__section mt-4 text-center">
+        <h2 class="semesters-status__title">Team Status</h2>
+
+        <% if current_user.role == "admin" || current_user.ta? %>
+          <div class="mb-2 d-flex justify-content-center gap-2">
+            <%= link_to "Update Cached Status Data",
+              semester_status_path(@semester, force_refresh: 1, debug: params[:debug]),
+              class: "btn btn-sm btn-outline-primary" %>
+
+            <%= link_to "Manage Sprint Dates",
+              semester_sprints_path(@semester),
+              class: "btn btn-sm btn-outline-secondary" %>
+
+            <% if flash[:notice].to_s.downcase.include?("snapshot") %>
+              <span class="badge text-bg-info align-self-center">
+                Snapshot update requested
+              </span>
             <% end %>
-            <div class="alert alert-info semesters-status__loading" role="status" id="status-load-panel" style="opacity:1 !important; visibility:visible !important; transition:none !important;">
-              <div class="mb-2">Loading status metrics from GitHub. This page is ready while data loads.</div>
-              <div class="d-flex align-items-center justify-content-center gap-2">
-                <div class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true" id="status-load-spinner"></div>
-                <strong id="status-load-text">Fetching Kanban + GitHub data...</strong>
-              </div>
-              <small id="status-load-elapsed" class="d-block mt-2" style="color:#1e3a52;">Elapsed: 0s</small>
-            </div>
-        </section>
+          </div>
 
-        <%= turbo_frame_tag "semester-status-content",
-          data: { status_src: semester_status_content_path(@semester, debug: params[:debug]) } do %>
-          <div class="text-center text-muted py-3" id="status-frame-placeholder">
-            Status request started. Waiting for server response...
+          <div class="text-muted small">
           </div>
         <% end %>
-      </div>
+
+        <div class="alert alert-info semesters-status__loading"
+             role="status"
+             id="status-load-panel"
+             style="opacity:1 !important; visibility:visible !important; transition:none !important;">
+
+          <div class="mb-2">
+            Loading status metrics from GitHub. This page is ready while data loads.
+          </div>
+
+          <div class="d-flex align-items-center justify-content-center gap-2">
+            <div class="spinner-border spinner-border-sm text-primary"
+                 role="status"
+                 aria-hidden="true"
+                 id="status-load-spinner">
+            </div>
+
+            <strong id="status-load-text">
+              Fetching Kanban + GitHub data...
+            </strong>
+          </div>
+
+          <small id="status-load-elapsed"
+                 class="d-block mt-2"
+                 style="color:#1e3a52;">
+            Elapsed: 0s
+          </small>
+        </div>
+      </section>
+
+      <%= turbo_frame_tag "semester-status-content",
+        data: {
+          status_src: semester_status_content_path(
+            @semester,
+            debug: params[:debug]
+          )
+        } do %>
+
+        <div class="text-center text-muted py-3"
+             id="status-frame-placeholder">
+          Status request started. Waiting for server response...
+        </div>
+
+      <% end %>
+
     </div>
   </div>
+</div>
 
-  <%= javascript_include_tag 'survey_page/survey_scroll_navigation' %>
-  <%= javascript_include_tag 'survey_page/survey_page_expanding_cols' %>
-  <%= javascript_include_tag 'octokit', type: "module" %>
+<%= javascript_include_tag 'survey_page/survey_scroll_navigation' %>
+<%= javascript_include_tag 'survey_page/survey_page_expanding_cols' %>
+<%= javascript_include_tag 'octokit', type: "module" %>
 
-  <script>
-    // Initialise tooltips + sprint filter (for both normal and Turbo loads)
-    function initTooltipsAndSprintFilter() {
-      // Tooltips
-      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-      tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
+<script>
+  // Initialise tooltips + sprint filter (for both normal and Turbo loads)
+  function initTooltipsAndSprintFilter() {
+    // Tooltips
+    const tooltipTriggerList = document.querySelectorAll(
+      '[data-bs-toggle="tooltip"]'
+    );
 
-      // Sprint filter
-      const buttons = document.querySelectorAll(".sprint-toggle");
-      const groups  = document.querySelectorAll(".sprint-group");
-      const stageButtons = document.querySelectorAll(".stage-toggle");
+    tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
 
-      if (!buttons.length || !groups.length) return;
-      function applyStatusFilters() {
-        const activeSprint =
-          document.querySelector(".sprint-toggle.active")?.dataset.sprint;
+    // Sprint filter
+    const buttons = document.querySelectorAll(".sprint-toggle");
+    const groups = document.querySelectorAll(".sprint-group");
+    const stageButtons = document.querySelectorAll(".stage-toggle");
 
-        const activeStage =
-          document.querySelector(".stage-toggle.active")?.dataset.stage;
+    if (!buttons.length || !groups.length) return;
 
-        groups.forEach(group => {
-          const matchesSprint = group.classList.contains(activeSprint);
-          // Sprint headings/sponsor columns do not have stage-group
-          if (!group.classList.contains("stage-group")) {
-            group.style.display = matchesSprint ? "" : "none";
-            return;
-          }
+    function applyStatusFilters() {
+      const activeSprint =
+        document.querySelector(".sprint-toggle.active")?.dataset.sprint;
 
-          const stages = (group.dataset.stage || "").split(" ");
-          const matchesStage = stages.includes(activeStage);
+      const activeStage =
+        document.querySelector(".stage-toggle.active")?.dataset.stage;
 
-          group.style.display =
-          matchesSprint && matchesStage ? "" : "none";
-        });
-        
-        const cardStages = document.querySelectorAll("[data-card-stage]");
+      groups.forEach(group => {
+        const matchesSprint = group.classList.contains(activeSprint);
 
-        cardStages.forEach(stage => {
-          stage.style.display =
-            stage.dataset.cardStage === activeStage ? "" : "none";
-        });
-        
-      }
-      // Sprint buttons
-      buttons.forEach(btn => {
-        // avoid double-binding
-        if (btn.dataset.sprintBound === "1") return;
-        btn.dataset.sprintBound = "1";
-
-        btn.addEventListener("click", () => {
-          buttons.forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-
-          applyStatusFilters();
-        });
-      });
-      // Stage buttons
-      stageButtons.forEach(btn => {
-        // avoid double-binding
-        if (btn.dataset.stageBound === "1") return;
-        btn.dataset.stageBound = "1";
-
-        btn.addEventListener("click", () => {
-          stageButtons.forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-
-          applyStatusFilters();
-        });
-      });
-
-      // Apply default active Sprint + Stage when page loads
-      applyStatusFilters();
-    }
-      
-    let statusProgressTimer;
-    let statusElapsedTimer;
-    let statusElapsedSeconds = 0;
-    const STATUS_REQUEST_TIMEOUT_MS = 60000;
-
-    function ensurePanelVisible() {
-      const panel = document.getElementById("status-load-panel");
-      if (!panel) return;
-
-      panel.style.display = "block";
-      panel.style.opacity = "1";
-      panel.style.visibility = "visible";
-    }
-
-    function setStatusProgress(value, label) {
-      const text = document.getElementById("status-load-text");
-      ensurePanelVisible();
-      if (text && label) text.textContent = label;
-    }
-
-    function startStatusProgress() {
-      clearInterval(statusProgressTimer);
-      clearInterval(statusElapsedTimer);
-      statusElapsedSeconds = 0;
-      let value = 8;
-      ensurePanelVisible();
-      setStatusProgress(value, "Fetching Kanban + GitHub data...");
-      const spinner = document.getElementById("status-load-spinner");
-      if (spinner) spinner.style.display = "inline-block";
-
-      const elapsed = document.getElementById("status-load-elapsed");
-      if (elapsed) elapsed.textContent = "Elapsed: 0s";
-
-      statusElapsedTimer = setInterval(() => {
-        statusElapsedSeconds += 1;
-        if (elapsed) elapsed.textContent = `Elapsed: ${statusElapsedSeconds}s`;
-
-        if (statusElapsedSeconds > 12 && statusElapsedSeconds <= 25) {
-          setStatusProgress(value, "Still working... checking GitHub activity.");
-        } else if (statusElapsedSeconds > 25) {
-          setStatusProgress(value, "Still working... this first load can take longer.");
-        }
-
-        if (statusElapsedSeconds > 12 && statusElapsedSeconds <= 25) {
-          setStatusProgress(value, "Still working... checking GitHub activity.");
-        } else if (statusElapsedSeconds > 25) {
-          setStatusProgress(value, "Still working... this first load can take longer.");
-        }
-      }, 1000);
-
-      // Simulate meaningful progress while waiting for network-bound API work.
-      statusProgressTimer = setInterval(() => {
-        value = Math.min(92, value + Math.max(1, Math.round((95 - value) * 0.12)));
-        setStatusProgress(value, null);
-      }, 450);
-    }
-
-    function completeStatusProgress(message) {
-      clearInterval(statusProgressTimer);
-      clearInterval(statusElapsedTimer);
-      setStatusProgress(100, message || "Status metrics loaded.");
-      const panel = document.getElementById("status-load-panel");
-      if (panel) {
-        panel.classList.remove("alert-info");
-        panel.classList.add("alert-success");
-      }
-      const spinner = document.getElementById("status-load-spinner");
-      if (spinner) spinner.style.display = "none";
-      const elapsed = document.getElementById("status-load-elapsed");
-      if (elapsed) elapsed.textContent = `Elapsed: ${statusElapsedSeconds}s`;
-
-      if (panel) {
-        setTimeout(() => {
-          panel.style.display = "none";
-        }, 300);
-      }
-    }
-
-    function hasRenderableStatusContent(frame) {
-      if (!frame) return false;
-
-      // Success state: explicit marker rendered only by _status_content partial.
-      return Boolean(frame.querySelector('[data-status-content-ready="1"]'));
-    }
-
-    // Upload sponsor CSV asynchronously so GitHub status data is not reloaded.
-    function initSponsorCsvUpload() {
-      if (document.documentElement.dataset.sponsorUploadBound === "1") return;
-      document.documentElement.dataset.sponsorUploadBound = "1";
-
-      document.addEventListener("submit", async (event) => {
-        const form = event.target;
-        if (!(form instanceof HTMLFormElement)) return;
-        if (form.dataset.sponsorUploadForm !== "1") return;
-
-        event.preventDefault();
-
-        const sprintKey = form.dataset.sponsorSprintKey;
-        const control = sprintKey ? document.querySelector(`[data-sponsor-control="${sprintKey}"]`) : null;
-        const fileInput = form.querySelector('input[name="sponsor_csv"]');
-        const feedbackEl = control ? control.querySelector('[data-sponsor-upload-feedback]') : null;
-        const hintEl = control ? control.querySelector('[data-sponsor-upload-hint]') : null;
-        const actionEl = control ? control.querySelector('[data-sponsor-actions]') : null;
-
-        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-          if (feedbackEl) {
-            feedbackEl.textContent = "Please choose a CSV file before uploading.";
-            feedbackEl.className = "small text-danger";
-          }
+        // Sprint headings/sponsor columns do not have stage-group
+        if (!group.classList.contains("stage-group")) {
+          group.style.display = matchesSprint ? "" : "none";
           return;
         }
 
-        const submitBtn = form.querySelector('input[type="submit"], button[type="submit"]');
-        const originalBtnText = submitBtn ? submitBtn.value || submitBtn.textContent : null;
-        if (submitBtn) {
-          submitBtn.disabled = true;
-          if ("value" in submitBtn) {
-            submitBtn.value = "Uploading...";
-          } else {
-            submitBtn.textContent = "Uploading...";
-          }
-        }
+        const stages = (group.dataset.stage || "").split(" ");
+        const matchesStage = stages.includes(activeStage);
 
-        try {
-          const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content");
-          const response = await fetch(form.action, {
-            method: "POST",
-            credentials: "same-origin",
-            headers: {
-              Accept: "application/json",
-              "X-CSRF-Token": csrf || ""
-            },
-            body: new FormData(form)
-          });
+        group.style.display =
+          matchesSprint && matchesStage ? "" : "none";
+      });
 
-          const payload = await response.json().catch(() => ({}));
+      const cardStages = document.querySelectorAll("[data-card-stage]");
 
-          if (!response.ok || !payload.success) {
-            throw new Error(payload.message || "Sponsor CSV upload failed.");
-          }
-
-          if (hintEl) hintEl.classList.add("d-none");
-          if (actionEl) actionEl.classList.remove("d-none");
-          if (feedbackEl) {
-            feedbackEl.textContent = payload.message || "Sponsor CSV uploaded successfully.";
-            feedbackEl.className = "small text-success";
-          }
-
-          const modalsContainer = document.getElementById("sponsor-modals-container");
-          if (modalsContainer && payload.modals_html) {
-            modalsContainer.innerHTML = payload.modals_html;
-          }
-
-          form.reset();
-        } catch (error) {
-          if (feedbackEl) {
-            feedbackEl.textContent = error.message || "Sponsor CSV upload failed.";
-            feedbackEl.className = "small text-danger";
-          }
-        } finally {
-          if (submitBtn) {
-            submitBtn.disabled = false;
-            if (originalBtnText !== null) {
-              if ("value" in submitBtn) {
-                submitBtn.value = originalBtnText;
-              } else {
-                submitBtn.textContent = originalBtnText;
-              }
-            }
-          }
-        }
+      cardStages.forEach(stage => {
+        stage.style.display =
+          stage.dataset.cardStage === activeStage ? "" : "none";
       });
     }
 
-    // Fallback loader: only runs if Turbo frame hydration appears stuck.
-    async function requestStatusContent() {
-      const frame = document.getElementById("semester-status-content");
-      if (!frame) return;
+    // Sprint buttons
+    buttons.forEach(btn => {
+      // Avoid double-binding
+      if (btn.dataset.sprintBound === "1") return;
+      btn.dataset.sprintBound = "1";
 
-      if (frame.dataset.requestStarted === "1") return;
-      frame.dataset.requestStarted = "1";
+      btn.addEventListener("click", () => {
+        buttons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
 
-      const src = frame.dataset.statusSrc;
-      if (!src) return;
+        applyStatusFilters();
+      });
+    });
 
-      let controller;
-      let timeoutId;
+    // Stage buttons
+    stageButtons.forEach(btn => {
+      // Avoid double-binding
+      if (btn.dataset.stageBound === "1") return;
+      btn.dataset.stageBound = "1";
 
-      try {
-        if (typeof AbortController !== "undefined") {
-          controller = new AbortController();
-          timeoutId = setTimeout(() => controller.abort(), STATUS_REQUEST_TIMEOUT_MS);
-        }
+      btn.addEventListener("click", () => {
+        stageButtons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
 
-        const response = await fetch(src, {
-          headers: {
-            Accept: "text/html"
-          },
-          credentials: "same-origin",
-          signal: controller ? controller.signal : undefined
-        });
-        if (!response.ok) throw new Error(`HTTP_${response.status}`);
+        applyStatusFilters();
+      });
+    });
 
-        const html = await response.text();
-        const parsed = new DOMParser().parseFromString(html, "text/html");
-        const returnedFrame = parsed.getElementById("semester-status-content");
+    // Apply default active Sprint + Stage when page loads
+    applyStatusFilters();
+  }
 
-        if (returnedFrame) {
-          frame.innerHTML = returnedFrame.innerHTML;
-        } else if (parsed.querySelector('[data-status-content-ready="1"]')) {
-          frame.innerHTML = html;
-        } else {
-          throw new Error("MISSING_READY_MARKER");
-        }
+  let statusProgressTimer;
+  let statusElapsedTimer;
+  let statusElapsedSeconds = 0;
 
-        if (hasRenderableStatusContent(frame)) {
-          frame.dataset.loaded = "1";
-          completeStatusProgress("Status metrics loaded.");
-          initTooltipsAndSprintFilter();
-        }
-      } catch (e) {
-        const panel = document.getElementById("status-load-panel");
-        if (panel) {
-          panel.classList.remove("alert-success");
-          panel.classList.add("alert-warning");
-        }
+  const STATUS_REQUEST_TIMEOUT_MS = 60000;
 
-        if (e && e.name === "AbortError") {
-          setStatusProgress(95, "Status request timed out. Please refresh to retry.");
-        } else {
-          setStatusProgress(95, "Status request failed. Please refresh to retry.");
-        }
+  function ensurePanelVisible() {
+    const panel = document.getElementById("status-load-panel");
 
-        clearInterval(statusProgressTimer);
-        clearInterval(statusElapsedTimer);
-      } finally {
-        if (timeoutId) clearTimeout(timeoutId);
-      }
+    if (!panel) return;
+
+    panel.style.display = "block";
+    panel.style.opacity = "1";
+    panel.style.visibility = "visible";
+  }
+
+  function setStatusProgress(value, label) {
+    const text = document.getElementById("status-load-text");
+
+    ensurePanelVisible();
+
+    if (text && label) {
+      text.textContent = label;
+    }
+  }
+
+  function startStatusProgress() {
+    clearInterval(statusProgressTimer);
+    clearInterval(statusElapsedTimer);
+
+    statusElapsedSeconds = 0;
+
+    let value = 8;
+
+    ensurePanelVisible();
+
+    setStatusProgress(value, "Fetching Kanban + GitHub data...");
+
+    const spinner = document.getElementById("status-load-spinner");
+
+    if (spinner) {
+      spinner.style.display = "inline-block";
     }
 
-    document.addEventListener("DOMContentLoaded", initTooltipsAndSprintFilter);
-    document.addEventListener("turbo:load", initTooltipsAndSprintFilter);
-    document.addEventListener("DOMContentLoaded", startStatusProgress);
-    document.addEventListener("turbo:load", startStatusProgress);
-    document.addEventListener("DOMContentLoaded", requestStatusContent);
-    document.addEventListener("turbo:load", requestStatusContent);
-    document.addEventListener("DOMContentLoaded", initSponsorCsvUpload);
-    document.addEventListener("turbo:load", initSponsorCsvUpload);
-  </script>
+    const elapsed = document.getElementById("status-load-elapsed");
+
+    if (elapsed) {
+      elapsed.textContent = "Elapsed: 0s";
+    }
+
+    statusElapsedTimer = setInterval(() => {
+      statusElapsedSeconds += 1;
+
+      if (elapsed) {
+        elapsed.textContent = `Elapsed: ${statusElapsedSeconds}s`;
+      }
+
+      if (statusElapsedSeconds > 12 && statusElapsedSeconds <= 25) {
+        setStatusProgress(
+          value,
+          "Still working... checking GitHub activity."
+        );
+      } else if (statusElapsedSeconds > 25) {
+        setStatusProgress(
+          value,
+          "Still working... this first load can take longer."
+        );
+      }
+    }, 1000);
+
+    // Simulate meaningful progress while waiting for network-bound API work.
+    statusProgressTimer = setInterval(() => {
+      value = Math.min(
+        92,
+        value + Math.max(1, Math.round((95 - value) * 0.12))
+      );
+
+      setStatusProgress(value, null);
+    }, 450);
+  }
+
+  function completeStatusProgress(message) {
+    clearInterval(statusProgressTimer);
+    clearInterval(statusElapsedTimer);
+
+    setStatusProgress(100, message || "Status metrics loaded.");
+
+    const panel = document.getElementById("status-load-panel");
+
+    if (panel) {
+      panel.classList.remove("alert-info");
+      panel.classList.add("alert-success");
+    }
+
+    const spinner = document.getElementById("status-load-spinner");
+
+    if (spinner) {
+      spinner.style.display = "none";
+    }
+
+    const elapsed = document.getElementById("status-load-elapsed");
+
+    if (elapsed) {
+      elapsed.textContent = `Elapsed: ${statusElapsedSeconds}s`;
+    }
+
+    if (panel) {
+      setTimeout(() => {
+        panel.style.display = "none";
+      }, 300);
+    }
+  }
+
+  function hasRenderableStatusContent(frame) {
+    if (!frame) return false;
+
+    // Success state: explicit marker rendered only by _status_content partial.
+    return Boolean(
+      frame.querySelector('[data-status-content-ready="1"]')
+    );
+  }
+
+  // Upload sponsor CSV asynchronously so GitHub status data is not reloaded.
+  function initSponsorCsvUpload() {
+    if (document.documentElement.dataset.sponsorUploadBound === "1") {
+      return;
+    }
+
+    document.documentElement.dataset.sponsorUploadBound = "1";
+
+    document.addEventListener("submit", async (event) => {
+      const form = event.target;
+
+      if (!(form instanceof HTMLFormElement)) return;
+      if (form.dataset.sponsorUploadForm !== "1") return;
+
+      event.preventDefault();
+
+      const sprintKey = form.dataset.sponsorSprintKey;
+
+      const control = sprintKey
+        ? document.querySelector(`[data-sponsor-control="${sprintKey}"]`)
+        : null;
+
+      const fileInput = form.querySelector('input[name="sponsor_csv"]');
+
+      const feedbackEl = control
+        ? control.querySelector('[data-sponsor-upload-feedback]')
+        : null;
+
+      const hintEl = control
+        ? control.querySelector('[data-sponsor-upload-hint]')
+        : null;
+
+      const actionEl = control
+        ? control.querySelector('[data-sponsor-actions]')
+        : null;
+
+      if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        if (feedbackEl) {
+          feedbackEl.textContent =
+            "Please choose a CSV file before uploading.";
+
+          feedbackEl.className = "small text-danger";
+        }
+
+        return;
+      }
+
+      const submitBtn = form.querySelector(
+        'input[type="submit"], button[type="submit"]'
+      );
+
+      const originalBtnText = submitBtn
+        ? submitBtn.value || submitBtn.textContent
+        : null;
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+
+        if ("value" in submitBtn) {
+          submitBtn.value = "Uploading...";
+        } else {
+          submitBtn.textContent = "Uploading...";
+        }
+      }
+
+      try {
+        const csrf = document
+          .querySelector('meta[name="csrf-token"]')
+          ?.getAttribute("content");
+
+        const response = await fetch(form.action, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            Accept: "application/json",
+            "X-CSRF-Token": csrf || ""
+          },
+          body: new FormData(form)
+        });
+
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok || !payload.success) {
+          throw new Error(
+            payload.message || "Sponsor CSV upload failed."
+          );
+        }
+
+        if (hintEl) {
+          hintEl.classList.add("d-none");
+        }
+
+        if (actionEl) {
+          actionEl.classList.remove("d-none");
+        }
+
+        if (feedbackEl) {
+          feedbackEl.textContent =
+            payload.message || "Sponsor CSV uploaded successfully.";
+
+          feedbackEl.className = "small text-success";
+        }
+
+        const modalsContainer = document.getElementById(
+          "sponsor-modals-container"
+        );
+
+        if (modalsContainer && payload.modals_html) {
+          modalsContainer.innerHTML = payload.modals_html;
+        }
+
+        form.reset();
+
+      } catch (error) {
+        if (feedbackEl) {
+          feedbackEl.textContent =
+            error.message || "Sponsor CSV upload failed.";
+
+          feedbackEl.className = "small text-danger";
+        }
+
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+
+          if (originalBtnText !== null) {
+            if ("value" in submitBtn) {
+              submitBtn.value = originalBtnText;
+            } else {
+              submitBtn.textContent = originalBtnText;
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // Fallback loader: only runs if Turbo frame hydration appears stuck.
+  async function requestStatusContent() {
+    const frame = document.getElementById("semester-status-content");
+
+    if (!frame) return;
+
+    if (frame.dataset.requestStarted === "1") return;
+
+    frame.dataset.requestStarted = "1";
+
+    const src = frame.dataset.statusSrc;
+
+    if (!src) return;
+
+    let controller;
+    let timeoutId;
+
+    try {
+      if (typeof AbortController !== "undefined") {
+        controller = new AbortController();
+
+        timeoutId = setTimeout(
+          () => controller.abort(),
+          STATUS_REQUEST_TIMEOUT_MS
+        );
+      }
+
+      const response = await fetch(src, {
+        headers: {
+          Accept: "text/html"
+        },
+        credentials: "same-origin",
+        signal: controller ? controller.signal : undefined
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP_${response.status}`);
+      }
+
+      const html = await response.text();
+
+      const parsed = new DOMParser().parseFromString(
+        html,
+        "text/html"
+      );
+
+      const returnedFrame = parsed.getElementById(
+        "semester-status-content"
+      );
+
+      if (returnedFrame) {
+        frame.innerHTML = returnedFrame.innerHTML;
+
+      } else if (
+        parsed.querySelector('[data-status-content-ready="1"]')
+      ) {
+        frame.innerHTML = html;
+
+      } else {
+        throw new Error("MISSING_READY_MARKER");
+      }
+
+      if (hasRenderableStatusContent(frame)) {
+        frame.dataset.loaded = "1";
+
+        completeStatusProgress("Status metrics loaded.");
+
+        initTooltipsAndSprintFilter();
+      }
+
+    } catch (e) {
+      const panel = document.getElementById("status-load-panel");
+
+      if (panel) {
+        panel.classList.remove("alert-success");
+        panel.classList.add("alert-warning");
+      }
+
+      if (e && e.name === "AbortError") {
+        setStatusProgress(
+          95,
+          "Status request timed out. Please refresh to retry."
+        );
+      } else {
+        setStatusProgress(
+          95,
+          "Status request failed. Please refresh to retry."
+        );
+      }
+
+      clearInterval(statusProgressTimer);
+      clearInterval(statusElapsedTimer);
+
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    }
+  }
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    initTooltipsAndSprintFilter
+  );
+
+  document.addEventListener(
+    "turbo:load",
+    initTooltipsAndSprintFilter
+  );
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    startStatusProgress
+  );
+
+  document.addEventListener(
+    "turbo:load",
+    startStatusProgress
+  );
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    requestStatusContent
+  );
+
+  document.addEventListener(
+    "turbo:load",
+    requestStatusContent
+  );
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    initSponsorCsvUpload
+  );
+
+  document.addEventListener(
+    "turbo:load",
+    initSponsorCsvUpload
+  );
+</script>

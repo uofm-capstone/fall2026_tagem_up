@@ -1,29 +1,93 @@
+<aside class="app-sidebar offcanvas-lg offcanvas-start"
+       id="appSidebar"
+       tabindex="-1"
+       aria-label="Primary navigation">
 
-<aside class="app-sidebar offcanvas-lg offcanvas-start" id="appSidebar" tabindex="-1" aria-label="Primary navigation">
   <div class="app-sidebar__header d-flex justify-content-between align-items-center">
     Navigation
-    <button type="button" class="btn-close btn-close-white sidebar-close" data-bs-dismiss="offcanvas" data-bs-target="#appSidebar" aria-label="Close"></button>
+
+    <button type="button"
+            class="btn-close btn-close-white sidebar-close"
+            data-bs-dismiss="offcanvas"
+            data-bs-target="#appSidebar"
+            aria-label="Close">
+    </button>
   </div>
 
   <nav class="app-sidebar__group" aria-label="Main sections">
-    <%= nav_link_to "Semesters", semesters_path, class: "app-sidebar__link", active_when: -> { controller_name == "semesters" && action_name != "status" } do %>
-      <i class="bi bi-calendar3 me-2" aria-hidden="true"></i> Semesters
+
+    <% if current_user.role == "admin" %>
+
+      <%= nav_link_to "Semesters", semesters_path,
+        class: "app-sidebar__link",
+        active_when: -> { controller_name == "semesters" && action_name != "status" } do %>
+
+        <i class="bi bi-calendar3 me-2" aria-hidden="true"></i>
+        Semesters
+
+      <% end %>
+
     <% end %>
 
-    <%= nav_link_to "Teams", teams_path, class: "app-sidebar__link", active_when: { controller: "teams" } do %>
-      <i class="bi bi-people me-2" aria-hidden="true"></i> Teams
+    <% if current_user.student? %>
+
+      <%= nav_link_to "My Team", teams_path,
+        class: "app-sidebar__link",
+        active_when: { controller: "teams" } do %>
+
+        <i class="bi bi-people me-2" aria-hidden="true"></i>
+        My Team
+
+      <% end %>
+
+    <% elsif current_user.role == "admin" || current_user.ta? %>
+
+      <%= nav_link_to "Teams", teams_path,
+        class: "app-sidebar__link",
+        active_when: { controller: "teams" } do %>
+
+        <i class="bi bi-people me-2" aria-hidden="true"></i>
+        Teams
+
+      <% end %>
+
     <% end %>
 
-    <%= nav_link_to "Students", students_path, class: "app-sidebar__link", active_when: { controller: "students" } do %>
-      <i class="bi bi-mortarboard me-2" aria-hidden="true"></i> Students
+    <% if current_user.role == "admin" || current_user.ta? %>
+
+      <%= nav_link_to "Students", students_path,
+        class: "app-sidebar__link",
+        active_when: { controller: "students" } do %>
+
+        <i class="bi bi-mortarboard me-2" aria-hidden="true"></i>
+        Students
+
+      <% end %>
+
     <% end %>
 
-    <%= nav_link_to "Status", status_page_path, class: "app-sidebar__link", active_when: { controller: "semesters", action: "status" } do %>
-      <i class="bi bi-bar-chart me-2" aria-hidden="true"></i> Status
+    <% if current_user.role == "admin" || current_user.student? %>
+
+      <%= nav_link_to "Status", status_page_path,
+        class: "app-sidebar__link",
+        active_when: { controller: "semesters", action: "status" } do %>
+
+        <i class="bi bi-bar-chart me-2" aria-hidden="true"></i>
+        Status
+
+      <% end %>
+
     <% end %>
 
-    <%= nav_link_to "Student Survey", student_survey_path, class: "app-sidebar__link", active_when: { controller: "pages", action: "student_survey" } do %>
-      <i class="bi bi-clipboard-check me-2" aria-hidden="true"></i> Student Survey
+    <%= nav_link_to "Student Survey", student_survey_path,
+      class: "app-sidebar__link",
+      active_when: { controller: "pages", action: "student_survey" } do %>
+
+      <i class="bi bi-clipboard-check me-2" aria-hidden="true"></i>
+      Student Survey
+
     <% end %>
+
   </nav>
+
 </aside>

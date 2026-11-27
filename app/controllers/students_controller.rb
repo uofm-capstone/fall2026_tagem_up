@@ -1,12 +1,15 @@
 class StudentsController < ApplicationController
   before_action :authenticate_user!
+  before_action :require_staff
   before_action :set_student, only: [:show, :edit, :update, :destroy]
+
   load_and_authorize_resource class: Student rescue nil
+
   before_action :set_current_semester
   before_action :load_teams, only: [:index, :new, :edit, :create, :update]
 
   def index
-    @student  = Student.new
+    @student = Student.new
     @students = load_students_for_index
     render :index
   end
@@ -24,8 +27,8 @@ class StudentsController < ApplicationController
     @student = Student.new(student_params)
     @student.semester = Semester.find(session[:last_viewed_semester_id])
     authorize! :create, @student rescue nil
+
     if @student.save
-      semester = @current_semester
       redirect_to students_path, notice: "Student was successfully added."
     else
       @students = load_students_for_index
@@ -53,7 +56,12 @@ class StudentsController < ApplicationController
 
   private
 
-  
+  def require_staff
+    unless current_user.role == "admin" || current_user.ta?
+      redirect_to root_path, alert: "Access denied."
+    end
+  end
+
   def set_student
     @student = Student.find(params[:id])
   rescue ActiveRecord::RecordNotFound
@@ -61,7 +69,9 @@ class StudentsController < ApplicationController
   end
 
   def set_current_semester
-    @current_semester = Semester.find_by(id: session[:last_viewed_semester_id])
+    @current_semester = Semester.find_by(
+      id: session[:last_viewed_semester_id]
+    )
   end
 
   def load_teams
@@ -74,11 +84,19 @@ class StudentsController < ApplicationController
   end
 
   def load_students_for_index
-      Student.where(semester_id: session[:last_viewed_semester_id]).order(Arel.sql("LOWER(full_name)"))
-      Student.where(semester_id: session[:last_viewed_semester_id]).order(Arel.sql("LOWER(full_name)"))
+    Student.where(
+      semester_id: session[:last_viewed_semester_id]
+    ).order(Arel.sql("LOWER(full_name)"))
   end
 
   def student_params
-    params.require(:student).permit(:name, :full_name, :email, :github_username, :team_id, :team_name)
+    params.require(:student).permit(
+      :name,
+      :full_name,
+      :email,
+      :github_username,
+      :team_id,
+      :team_name
+    )
   end
 end

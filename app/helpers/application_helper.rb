@@ -71,8 +71,16 @@ module ApplicationHelper
     # Status is a per-semester page: /semesters/:id/status.
     # When we don't have a "current" semester in session yet, fall back to Semesters.
     def status_page_path
+        if current_user&.student?
+            team = current_user.student&.teams&.order(:id)&.first
+
+            return team ? semester_status_path(team.semester_id) : teams_path
+        end
+
         semester_id = session[:last_viewed_semester_id]
-        semester_id.present? ? semester_status_path(semester_id) : semesters_path
+
+        semester_id.present? ?
+            semester_status_path(semester_id) : semesters_path
     end
 
     # This method creates a link with `data-id` and `data-fields` attributes.

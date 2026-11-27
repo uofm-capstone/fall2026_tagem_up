@@ -132,6 +132,7 @@
 
                     <tbody>
                       <% team.students.each do |student| %>
+                        <% next if current_user.student? && student.id != current_user.student&.id %>
                         <% metric = status_metrics.dig(team.id, student.id, sprint) || {} %>
 
                         <tr>
@@ -242,6 +243,7 @@
 
                     <tbody>
                       <% team.students.each do |student| %>
+                        <% next if current_user.student? && student.id != current_user.student&.id %>
                         <% metric = status_metrics.dig(team.id, student.id, sprint) || {} %>
                         <% done_count = metric.dig(:fsd, :done).to_i %>
                         <% total_count = metric.dig(:fa, :assigned_cards).to_i %>
@@ -464,6 +466,7 @@
 
                     <tbody>
                       <% team.students.each do |student| %>
+                        <% next if current_user.student? && student.id != current_user.student&.id %>
                         <% metric = status_metrics.dig(team.id, student.id, sprint) || {} %>
                         <% done_count = metric.dig(:fsd, :done).to_i %>
                         <% total_count = metric.dig(:fa, :assigned_cards).to_i %>
@@ -615,7 +618,7 @@
           </div>
 
         <% end %>
-        <% if ["Sprint 2", "Sprint 3", "Sprint 4"].include?(sprint) %>
+          <% if (current_user.role == "admin" || current_user.ta?) && ["Sprint 2", "Sprint 3", "Sprint 4"].include?(sprint) %>
           <% sprint_number = sprint.split.last %>
           <% attached = @sponsor_csv_attached[sprint] %>
 

@@ -2,50 +2,59 @@
   title: "Teams",
   subtitle: "Review team membership and core project links for the selected semester." %>
 
-<div class="teams-index__actions">
-  <%= button_tag "New Team",
-    type: "button",
-    class: "btn btn-ui-primary",
-    data: { bs_toggle: "modal", bs_target: "#newTeamModal" }
-  %>
-</div>
+<% if can? :create, Team %>
 
-<section class="teams-index__table-card">
-  <div class="teams-index__table-header">
-    <h2>Import Team Roster CSV</h2>
+  <div class="teams-index__actions">
+    <%= button_tag "New Team",
+      type: "button",
+      class: "btn btn-ui-primary",
+      data: { bs_toggle: "modal", bs_target: "#newTeamModal" }
+    %>
   </div>
-  <div class="p-3">
-    <p class="text-muted mb-2">
-      Upload a roster CSV to create/update students and teams for the selected semester.
-    </p>
-    <%= form_with url: import_csv_teams_path, method: :post, local: true, html: { multipart: true, class: "d-flex flex-wrap gap-2 align-items-center" } do %>
-      <%= file_field_tag :student_csv, accept: ".csv", class: "form-control", required: true %>
-      <%= submit_tag "Import CSV", class: "btn btn-ui-primary" %>
-    <% end %>
-  </div>
-</section>
 
-<div class="modal fade" id="newTeamModal" tabindex="-1" aria-labelledby="newTeamModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="newTeamModalLabel">Create New Team</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <%= render "form", team: @team, current_semester: @current_semester %>
+  <section class="teams-index__table-card">
+    <div class="teams-index__table-header">
+      <h2>Import Team Roster CSV</h2>
+    </div>
+
+    <div class="p-3">
+      <p class="text-muted mb-2">
+        Upload a roster CSV to create/update students and teams for the selected semester.
+      </p>
+
+      <%= form_with url: import_csv_teams_path, method: :post, local: true, html: { multipart: true, class: "d-flex flex-wrap gap-2 align-items-center" } do %>
+        <%= file_field_tag :student_csv, accept: ".csv", class: "form-control", required: true %>
+        <%= submit_tag "Import CSV", class: "btn btn-ui-primary" %>
+      <% end %>
+    </div>
+  </section>
+
+  <div class="modal fade" id="newTeamModal" tabindex="-1" aria-labelledby="newTeamModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title" id="newTeamModalLabel">Create New Team</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <%= render "form", team: @team, current_semester: @current_semester %>
+        </div>
+
       </div>
     </div>
   </div>
-</div>
 
-<% if @team.errors.any? %>
-  <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      var myModal = new bootstrap.Modal(document.getElementById('newTeamModal'));
-      myModal.show();
-    });
-  </script>
+  <% if @team.errors.any? %>
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        var myModal = new bootstrap.Modal(document.getElementById('newTeamModal'));
+        myModal.show();
+      });
+    </script>
+  <% end %>
+
 <% end %>
 
 <section class="teams-index__table-card">
@@ -54,27 +63,48 @@
   </div>
 
   <div class="ui-table-wrap">
-    <table class='table table-hover ui-table'>
-      <thead class='text-center'>
+    <table class="table table-hover ui-table">
+
+      <thead class="text-center">
         <tr>
           <th>Team Name</th>
           <th>Members</th>
-          <th>Github Token</th>
+
+          <% unless current_user.student? %>
+            <th>Github Token</th>
+          <% end %>
+
           <th>Links</th>
-          <th>Actions</th>
+
+          <% unless current_user.student? %>
+            <th>Actions</th>
+          <% end %>
         </tr>
       </thead>
+
       <tbody>
         <% @teams.each do |team| %>
           <tr>
-            <td class='align-middle text-center'><%= team.name %></td>
-            <td class='align-middle'><%= team.students.map(&:email).join('<br>').html_safe %></td>
-            <td class='align-middle text-center'>
-              <%= team.github_token.present? ? "Configured" : "Not Configured" %>
+
+            <td class="align-middle text-center">
+              <%= link_to team.name, team_path(team) %>
             </td>
-            <td class='align-middle'>
+
+            <td class="align-middle">
+              <%= safe_join(team.students.map(&:email), tag.br) %>
+            </td>
+
+            <% unless current_user.student? %>
+              <td class="align-middle text-center">
+                <%= team.github_token.present? ? "Configured" : "Not Configured" %>
+              </td>
+            <% end %>
+
+            <td class="align-middle">
               <div class="teams-index__links">
-                <div class='teams-index__links-row'>
+
+                <div class="teams-index__links-row">
+
                   <%= link_to 'Repository', team.repo_url,
                     class: class_names(
                       "btn btn-outline-secondary btn-sm link-button",
@@ -83,6 +113,7 @@
                     ),
                     target: '_blank',
                     rel: 'noopener' %>
+
                   <%= link_to 'Project Board', team.project_board_url,
                     class: class_names(
                       "btn btn-outline-secondary btn-sm link-button",
@@ -91,8 +122,11 @@
                     ),
                     target: '_blank',
                     rel: 'noopener' %>
+
                 </div>
-                <div class='teams-index__links-row'>
+
+                <div class="teams-index__links-row">
+
                   <%= link_to 'Timesheet', team.timesheet_url,
                     class: class_names(
                       "btn btn-outline-secondary btn-sm link-button",
@@ -101,6 +135,7 @@
                     ),
                     target: '_blank',
                     rel: 'noopener' %>
+
                   <%= link_to 'Client Notes', team.client_notes_url,
                     class: class_names(
                       "btn btn-outline-secondary btn-sm link-button",
@@ -109,29 +144,39 @@
                     ),
                     target: '_blank',
                     rel: 'noopener' %>
+
                 </div>
+
               </div>
             </td>
-            <td class='align-middle text-center'>
-              <% if can? :modify, team %>
-                <div class="teams-index__row-actions">
-                  <button type="button" class="icon-button"
-                          data-bs-toggle="modal"
-                          data-bs-target="#editTeamModal-<%= team.id %>">
-                    <i class="bi bi-pen-fill"></i>
-                  </button>
 
-                  <button type="button" class="icon-button"
-                          data-bs-toggle="modal"
-                          data-bs-target="#deleteTeamModal-<%= team.id %>">
-                    <i class="bi bi-trash-fill"></i>
-                  </button>
-                </div>
-              <% end %>
-            </td>
+            <% unless current_user.student? %>
+              <td class="align-middle text-center">
+
+                <% if can? :modify, team %>
+                  <div class="teams-index__row-actions">
+
+                    <button type="button" class="icon-button"
+                            data-bs-toggle="modal"
+                            data-bs-target="#editTeamModal-<%= team.id %>">
+                      <i class="bi bi-pen-fill"></i>
+                    </button>
+
+                    <button type="button" class="icon-button"
+                            data-bs-toggle="modal"
+                            data-bs-target="#deleteTeamModal-<%= team.id %>">
+                      <i class="bi bi-trash-fill"></i>
+                    </button>
+
+                  </div>
+                <% end %>
+
+              </td>
+            <% end %>
+
           </tr>
 
-          <% if team.errors.any? %>
+          <% if can?(:modify, team) && team.errors.any? %>
             <script>
               document.addEventListener("DOMContentLoaded", function() {
                 var myModal = new bootstrap.Modal(document.getElementById('editTeamModal-<%= team.id %>'));
@@ -142,43 +187,67 @@
 
         <% end %>
       </tbody>
+
     </table>
   </div>
 </section>
 
 <% @teams.each do |team| %>
-  <div class="modal fade" id="editTeamModal-<%= team.id %>" tabindex="-1" aria-labelledby="editTeamModalLabel-<%= team.id %>" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="editTeamModalLabel-<%= team.id %>">Edit <%= team.name %></h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <%= render "form", team: team, current_semester: @current_semester %>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="modal fade" id="deleteTeamModal-<%= team.id %>" tabindex="-1" aria-labelledby="deleteTeamModalLabel-<%= team.id %>" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title text-danger" id="deleteTeamModalLabel-<%= team.id %>">
-            Are you sure you want to delete this team?
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <p>This action cannot be undone.</p>
-        </div>
-        <div class="modal-footer">
-          <%= button_to team_path(team), method: :delete, class: "btn btn-danger" do %>
-            Delete Team
-          <% end %>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+  <% if can? :modify, team %>
+
+    <div class="modal fade" id="editTeamModal-<%= team.id %>" tabindex="-1" aria-labelledby="editTeamModalLabel-<%= team.id %>" aria-hidden="true">
+
+      <div class="modal-dialog">
+        <div class="modal-content">
+
+          <div class="modal-header">
+            <h5 class="modal-title" id="editTeamModalLabel-<%= team.id %>">
+              Edit <%= team.name %>
+            </h5>
+
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            <%= render "form", team: team, current_semester: @current_semester %>
+          </div>
+
         </div>
       </div>
     </div>
-  </div>
+
+    <div class="modal fade" id="deleteTeamModal-<%= team.id %>" tabindex="-1" aria-labelledby="deleteTeamModalLabel-<%= team.id %>" aria-hidden="true">
+
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+          <div class="modal-header">
+            <h5 class="modal-title text-danger" id="deleteTeamModalLabel-<%= team.id %>">
+              Are you sure you want to delete this team?
+            </h5>
+
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+
+          <div class="modal-body">
+            <p>This action cannot be undone.</p>
+          </div>
+
+          <div class="modal-footer">
+
+            <%= button_to team_path(team), method: :delete, class: "btn btn-danger" do %>
+              Delete Team
+            <% end %>
+
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              Cancel
+            </button>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  <% end %>
 <% end %>

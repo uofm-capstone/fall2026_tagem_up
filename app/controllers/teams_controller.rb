@@ -5,12 +5,21 @@ class TeamsController < ApplicationController
   load_and_authorize_resource class: Team
 
   def index
-    @students = Student.where(semester_id: session[:last_viewed_semester_id]).order(:full_name)
-    
-    if current_user.role == "student"
+    if current_user.student?
       @teams = current_user.student ? current_user.student.teams : Team.none
+
+      @students = Student.joins(:student_teams)
+                         .where(student_teams: { team_id: @teams.select(:id) })
+                         .distinct
+                         .order(:full_name)
     else
-      @teams = Team.where(semester_id: session[:last_viewed_semester_id])
+      @students = Student.where(
+        semester_id: session[:last_viewed_semester_id]
+      ).order(:full_name)
+
+      @teams = Team.where(
+        semester_id: session[:last_viewed_semester_id]
+      )
     end
 
     @team = Team.new

@@ -27,7 +27,7 @@ class SemestersController < ApplicationController
   before_action :check_ownership, only: [:destroy]
   before_action :check_admin
   before_action :check_ta_or_admin, only: [:sponsor_responses, :upload_sponsor_csv, :sponsor_response_details]
-  skip_before_action :check_admin, only: [:sponsor_responses, :upload_sponsor_csv, :sponsor_response_details]
+  skip_before_action :check_admin, only: [:sponsor_responses,:upload_sponsor_csv,:sponsor_response_details,:status,:status_content]
 
   # --------------------------------------------------------
   # SETUP & AUTHORIZATION HELPERS
@@ -47,8 +47,8 @@ class SemestersController < ApplicationController
 
   # Restricts accessing semesters to admin users.
   def check_admin
-    unless current_user.admin?
-      redirect_to root_path(flash[:alert] = "You are not authorized to access this page.")
+    unless current_user.role == "admin"
+      redirect_to root_path, alert: "You are not authorized to access this page."
     end
   end
 
@@ -339,21 +339,65 @@ end
 
   # Displays semester progress status for all teams/sprints.
   def status
+    if current_user.student?
+      return student_status
+    end
+
+    check_admin
+    return if performed?
+
     @semester = Semester.find_by(id: params[:id])
     return redirect_to(semesters_path) unless @semester
 
     if ActiveModel::Type::Boolean.new.cast(params[:force_refresh])
       session[:status_force_refresh_once] = true
-      return redirect_to semester_status_path(@semester, debug: params[:debug]), notice: "Status snapshot update requested."
+
+      return redirect_to semester_status_path(
+        @semester,
+        debug: params[:debug]
+      ), notice: "Status snapshot update requested."
     end
 
     session[:last_viewed_semester_id] = @semester.id
     render :show
   end
 
+  def student_status
+  student = current_user.student
+
+  unless student
+    return redirect_to teams_path,
+      alert: "No student profile has been assigned to your account."
+  end
+
+  @teams = student.teams.where(
+    semester_id: params[:id]
+  )
+
+  if @teams.empty?
+    return redirect_to teams_path,
+      alert: "You do not have a team assigned in this semester."
+  end
+
+  @semester = Semester.find(params[:id])
+
+  session[:last_viewed_semester_id] = @semester.id
+
+  render :show
+end
+
+private :student_status
+
   # Returns heavy status content after shell has rendered.
   def status_content
-    @semester = Semester.find_by(id: params[:id])
+    if current_user.student?
+      return student_status_content
+    end
+
+    check_admin
+    return if performed?
+
+  @semester = Semester.find_by(id: params[:id])
     return head :not_found unless @semester
 
     session[:last_viewed_semester_id] = @semester.id
@@ -588,28 +632,50 @@ end
 
   private
 
-  def parse_sponsor_csv(attachment: nil)
-    target_attachment = attachment || @semester.client_csv
-    return { rows: [], full_questions: {}, errors: ["No sponsor CSV attached."] } unless target_attachment&.attached?
+  def student_status_content
+  student = current_user.student
 
-    target_attachment.open do |temp_client|
-      CSVSurveyParserService.new(file: temp_client).parse
-    end
-  rescue StandardError => e
-    Rails.logger.error("Sponsor CSV parse failed for semester #{@semester.id}: #{e.class} - #{e.message}")
-    { rows: [], full_questions: {}, errors: ["Unable to parse sponsor CSV."] }
+  return head :forbidden unless student
+
+  @semester = Semester.find_by(id: params[:id])
+
+  return head :not_found unless @semester
+
+  @teams = student.teams.where(
+    semester_id: @semester.id
+  ).includes(:students)
+
+  return head :forbidden if @teams.empty?
+
+  @sprints = @semester.sprints.order(:start_date)
+  @sprint_list = @sprints.map(&:name)
+
+  @service = GithubService.new(user: current_user)
+  @force_github_refresh = false
+  @show_github_inspector = false
+
+  @team_sprint_metrics = {}
+  @status_metrics = {}
+  @team_overview_by_id = {}
+  @sponsor_csv_attached = {}
+
+  @teams.each do |team|
+    payload = build_team_status_payload(team)
+
+    @team_sprint_metrics[team.id] =
+      payload[:team_sprint_metrics]
+
+    @status_metrics[team.id] =
+      payload[:status_metrics]
+
+    @team_overview_by_id[team.id] =
+      payload[:team_status_overview]
   end
 
-  def sponsor_attachment_name_for_sprint(sprint_number)
-    case sprint_number.to_s
-    when "2"
-      :sponsor_csv_sprint_2
-    when "3"
-      :sponsor_csv_sprint_3
-    when "4"
-      :sponsor_csv_sprint_4
-    end
-  end
+  response.headers["Cache-Control"] = "no-store"
+
+  render partial: "semesters/status_content"
+end
 
   # Executes parse + LLM summary generation through SponsorSummaryService.
   # Summary storage is handled separately in session-scoped cache helpers.
