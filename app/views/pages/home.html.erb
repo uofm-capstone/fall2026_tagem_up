@@ -5,10 +5,12 @@
     Automate, assist, and accelerate your grading process with intelligent feedback and streamlined evaluation tools.
   </p>
 
+ <% if current_user.role == "admin" %>
   <div class="mt-5">
     <%= link_to "Get Started", semesters_path, class: "btn btn-primary btn-lg me-2" %>
     <%# Legacy cleanup: removed non-functional "Learn More" button (href="#") to avoid dead-end UI in sponsor demos. %>
   </div>
+<% end %>
 
   <hr class="my-5">
 
